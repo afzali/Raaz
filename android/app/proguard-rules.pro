@@ -14,6 +14,7 @@
 -keepattributes *Annotation*
 -keepclassmembers class io.raaz.messenger.data.network.** { *; }
 -keep class io.raaz.messenger.data.network.** { *; }
+-keep class io.raaz.messenger.crypto.QrCodeHelper$ContactPayload { *; }
 
 # ZXing
 -keep class com.google.zxing.** { *; }

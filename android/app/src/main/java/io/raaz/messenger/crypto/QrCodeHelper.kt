@@ -2,6 +2,7 @@ package io.raaz.messenger.crypto
 
 import android.graphics.Bitmap
 import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.MultiFormatWriter
@@ -14,10 +15,10 @@ object QrCodeHelper {
     private val gson = Gson()
 
     data class ContactPayload(
-        val userId: String,
-        val deviceId: String,
-        val publicKey: String,
-        val serverUrl: String
+        @SerializedName("userId")   val userId: String,
+        @SerializedName("deviceId") val deviceId: String,
+        @SerializedName("publicKey") val publicKey: String,
+        @SerializedName("serverUrl") val serverUrl: String
     )
 
     fun encodeContact(userId: String, deviceId: String, publicKey: String, serverUrl: String): String {
@@ -29,17 +30,30 @@ object QrCodeHelper {
 
     fun decodeContact(encoded: String): ContactPayload? {
         return try {
-            // Accept URL-safe (no padding), URL-safe (padded), and standard Base64
-            val cleaned = encoded.trim()
+            val cleaned = encoded.replace(Regex("\\s"), "")
+            if (cleaned.isBlank()) return null
+
             val bytes = try {
                 Base64.getUrlDecoder().decode(cleaned)
             } catch (_: Exception) {
-                Base64.getDecoder().decode(cleaned)
+                try {
+                    Base64.getDecoder().decode(cleaned)
+                } catch (_: Exception) {
+                    Base64.getUrlDecoder().decode(cleaned.trimEnd('='))
+                }
             }
             val json = String(bytes)
-            val payload = gson.fromJson(json, ContactPayload::class.java)
-            // Validate required fields
-            if (payload.userId.isBlank() || payload.publicKey.isBlank()) null else payload
+            val tree = gson.fromJson(json, com.google.gson.JsonObject::class.java)
+
+            // Support both new format (userId/deviceId/publicKey/serverUrl)
+            // and old minified format (a/b/c/d) produced before @SerializedName fix
+            val userId    = (tree.get("userId")    ?: tree.get("a"))?.asString ?: ""
+            val deviceId  = (tree.get("deviceId")  ?: tree.get("b"))?.asString ?: ""
+            val publicKey = (tree.get("publicKey") ?: tree.get("c"))?.asString ?: ""
+            val serverUrl = (tree.get("serverUrl") ?: tree.get("d"))?.asString ?: ""
+
+            if (userId.isBlank() || publicKey.isBlank()) null
+            else ContactPayload(userId, deviceId, publicKey, serverUrl)
         } catch (e: Exception) {
             null
         }

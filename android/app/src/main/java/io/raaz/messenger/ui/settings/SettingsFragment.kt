@@ -101,12 +101,25 @@ class SettingsFragment : Fragment() {
         ).apply { setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
         binding.spinnerLockTimeout.adapter = spinnerAdapter
 
-        // Populate fields from DB settings
+        // Populate fields from DB settings — attach listener only after initial selection is set
         viewModel.settings.observe(viewLifecycleOwner) { settings ->
             settings ?: return@observe
             binding.etServerUrl.setText(settings.serverUrl)
             val idx = lockTimeoutOptions.indexOfFirst { it.second == settings.lockTimeoutMs }
+
+            // Remove listener while programmatically setting selection to avoid spurious saves
+            binding.spinnerLockTimeout.onItemSelectedListener = null
             if (idx >= 0) binding.spinnerLockTimeout.setSelection(idx)
+
+            // Re-attach after the current layout pass so setSelection doesn't trigger it
+            binding.spinnerLockTimeout.post {
+                binding.spinnerLockTimeout.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+                    override fun onItemSelected(parent: android.widget.AdapterView<*>?, v: View?, position: Int, id: Long) {
+                        viewModel.saveLockTimeout(lockTimeoutOptions[position].second)
+                    }
+                    override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+                }
+            }
         }
 
         viewModel.saved.observe(viewLifecycleOwner) {
@@ -117,14 +130,6 @@ class SettingsFragment : Fragment() {
         binding.btnSaveServer.setOnClickListener {
             val url = binding.etServerUrl.text?.toString()?.trim() ?: ""
             if (url.isNotBlank()) viewModel.saveServerUrl(url)
-        }
-
-        // Save lock timeout on spinner change
-        binding.spinnerLockTimeout.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: android.widget.AdapterView<*>?, v: View?, position: Int, id: Long) {
-                viewModel.saveLockTimeout(lockTimeoutOptions[position].second)
-            }
-            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
         }
 
         // Logs

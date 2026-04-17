@@ -61,14 +61,15 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
 
     fun saveLockTimeout(timeoutMs: Long) {
         viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                try {
+            try {
+                withContext(Dispatchers.IO) {
                     db?.let { SettingsDao(it.db).updateLockTimeout(timeoutMs) }
-                    SessionLockManager.init(timeoutMs)
-                    _saved.postValue(true)
-                } catch (e: Exception) {
-                    AppLogger.e(TAG, "Failed to save lock timeout: ${e.message}", e)
                 }
+                // updateTimeout (not init) — addObserver already called at startup
+                SessionLockManager.updateTimeout(timeoutMs)
+                _saved.postValue(true)
+            } catch (e: Exception) {
+                AppLogger.e(TAG, "Failed to save lock timeout: ${e.message}", e)
             }
         }
     }

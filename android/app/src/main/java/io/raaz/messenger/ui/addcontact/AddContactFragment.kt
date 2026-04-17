@@ -109,7 +109,12 @@ class AddContactFragment : Fragment() {
                     findNavController().navigateUp()
                 }
                 is AddContactViewModel.State.Error -> {
-                    binding.tvError.text = getString(io.raaz.messenger.R.string.add_contact_invalid_code)
+                    val msg = when (state.reason) {
+                        "db_not_ready" -> getString(io.raaz.messenger.R.string.error_unknown)
+                        "empty_code" -> getString(io.raaz.messenger.R.string.add_contact_code_hint)
+                        else -> getString(io.raaz.messenger.R.string.add_contact_invalid_code)
+                    }
+                    binding.tvError.text = msg
                     binding.tvError.show()
                 }
                 else -> binding.tvError.hide()

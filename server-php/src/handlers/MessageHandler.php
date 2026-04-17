@@ -17,6 +17,7 @@ class MessageHandler {
 
         $recipientId = trim($body['recipientDeviceId'] ?? '');
         $ciphertext  = trim($body['ciphertext'] ?? '');
+        $messageId   = trim($body['messageId'] ?? '');
 
         if (!$recipientId || !$ciphertext) {
             http_response_code(400);
@@ -38,33 +39,47 @@ class MessageHandler {
             return;
         }
 
-        $id  = bin2hex(random_bytes(16));
+        // Use client-provided messageId if valid, otherwise generate one
+        $id  = ($messageId && strlen($messageId) <= 64) ? $messageId : bin2hex(random_bytes(16));
         $now = time();
+        $expiresAt = $now + $this->ttl;
 
         $this->db->prepare(
-            "INSERT INTO messages (id, recipient_device, sender_device, ciphertext, created_at, expires_at)
+            "INSERT OR IGNORE INTO messages (id, recipient_device, sender_device, ciphertext, created_at, expires_at)
              VALUES (?, ?, ?, ?, ?, ?)"
-        )->execute([$id, $recipientId, $device['id'], $ciphertext, $now, $now + $this->ttl]);
+        )->execute([$id, $recipientId, $device['id'], $ciphertext, $now, $expiresAt]);
 
         http_response_code(201);
-        echo json_encode(['id' => $id]);
+        // server_message_id — matches Android ApiModels.PushMessageResponse
+        echo json_encode([
+            'server_message_id' => $id,
+            'expires_at'        => $expiresAt,
+        ]);
     }
 
     public function pull(array $params): void {
         $device = Auth::requireDevice($this->db);
 
         $stmt = $this->db->prepare(
-            "SELECT id,
-                    sender_device   AS sender_device_id,
+            "SELECT id          AS server_message_id,
+                    sender_device AS sender_device_id,
                     ciphertext,
-                    created_at      AS createdAt
+                    created_at,
+                    expires_at
              FROM messages
              WHERE recipient_device = ? AND acked = 0
              ORDER BY created_at ASC
              LIMIT 100"
         );
         $stmt->execute([$device['id']]);
-        $messages = $stmt->fetchAll();
+        $rows = $stmt->fetchAll();
+
+        // Cast timestamps to int
+        $messages = array_map(function($row) {
+            $row['created_at'] = (int)$row['created_at'];
+            $row['expires_at'] = (int)$row['expires_at'];
+            return $row;
+        }, $rows);
 
         echo json_encode(['messages' => $messages]);
     }
@@ -85,8 +100,8 @@ class MessageHandler {
         $stmt->execute([$id, $device['id']]);
 
         if ($stmt->rowCount() === 0) {
-            http_response_code(404);
-            echo json_encode(['error' => 'message_not_found']);
+            // Already deleted or not found — treat as OK (idempotent)
+            echo json_encode(['ok' => true]);
             return;
         }
 

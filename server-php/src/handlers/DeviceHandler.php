@@ -10,9 +10,9 @@ class DeviceHandler {
     public function register(array $params): void {
         $body = json_decode(file_get_contents('php://input'), true);
 
-        $userId    = trim($body['userId'] ?? '');
-        $deviceId  = trim($body['deviceId'] ?? '');
-        $publicKey = trim($body['publicKey'] ?? '');
+        $userId    = trim($body['user_id']   ?? $body['userId']   ?? '');
+        $deviceId  = trim($body['device_id'] ?? $body['deviceId'] ?? '');
+        $publicKey = trim($body['public_key'] ?? $body['publicKey'] ?? '');
 
         if (!$userId || !$deviceId || !$publicKey) {
             http_response_code(400);
@@ -20,27 +20,30 @@ class DeviceHandler {
             return;
         }
 
-        // Check for existing device registration
-        $stmt = $this->db->prepare("SELECT id FROM devices WHERE id = ?");
-        $stmt->execute([$deviceId]);
-        if ($stmt->fetch()) {
-            http_response_code(409);
-            echo json_encode(['error' => 'device_exists']);
-            return;
-        }
-
         $token     = Auth::generateToken();
         $tokenHash = hash('sha256', $token);
+        $now       = time();
 
-        $this->db->prepare(
-            "INSERT INTO devices (id, user_id, public_key, token_hash, registered_at)
-             VALUES (?, ?, ?, ?, ?)"
-        )->execute([$deviceId, $userId, $publicKey, $tokenHash, time()]);
+        // If device already exists: update public_key and issue new token
+        $stmt = $this->db->prepare("SELECT id FROM devices WHERE id = ?");
+        $stmt->execute([$deviceId]);
+        $existing = $stmt->fetch();
+
+        if ($existing) {
+            $this->db->prepare(
+                "UPDATE devices SET public_key=?, token_hash=?, last_active=? WHERE id=?"
+            )->execute([$publicKey, $tokenHash, $now, $deviceId]);
+        } else {
+            $this->db->prepare(
+                "INSERT INTO devices (id, user_id, public_key, token_hash, registered_at, last_active)
+                 VALUES (?, ?, ?, ?, ?, ?)"
+            )->execute([$deviceId, $userId, $publicKey, $tokenHash, $now, $now]);
+        }
 
         http_response_code(201);
         echo json_encode([
             'token'    => $token,
-            'deviceId' => $deviceId,
+            'device_id' => $deviceId,
         ]);
     }
 }

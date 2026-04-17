@@ -3,18 +3,22 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingVertical="2dp">
+    android:paddingTop="1dp"
+    android:paddingBottom="1dp">
 
     <LinearLayout
+        android:id="@+id/bubble"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="start"
         android:layout_marginStart="8dp"
-        android:layout_marginEnd="64dp"
+        android:layout_marginEnd="72dp"
         android:orientation="vertical"
         android:background="@drawable/bg_bubble_incoming"
-        android:paddingHorizontal="@dimen/bubble_padding_h"
-        android:paddingVertical="@dimen/bubble_padding_v">
+        android:paddingStart="@dimen/bubble_padding_h"
+        android:paddingEnd="@dimen/bubble_padding_h"
+        android:paddingTop="@dimen/bubble_padding_v"
+        android:paddingBottom="@dimen/bubble_padding_v">
 
         <TextView
             android:id="@+id/tv_message"
@@ -23,7 +27,7 @@
             android:textColor="?attr/colorOnSurface"
             android:textSize="15sp"
             android:maxWidth="@dimen/bubble_max_width"
-            android:lineSpacingMultiplier="1.2" />
+            android:lineSpacingMultiplier="1.25" />
 
         <TextView
             android:id="@+id/tv_time"
@@ -32,7 +36,7 @@
             android:layout_gravity="end"
             android:textColor="?attr/colorOnSurfaceVariant"
             android:textSize="11sp"
-            android:layout_marginTop="4dp" />
+            android:layout_marginTop="2dp" />
     </LinearLayout>
 
 </FrameLayout>

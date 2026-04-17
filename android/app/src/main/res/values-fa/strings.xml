@@ -101,6 +101,8 @@
     <string name="notif_channel_messages_desc">اعلان‌های پیام جدید</string>
     <string name="notif_new_message">پیام جدید دریافت شد</string>
     <string name="notif_new_message_multi">%d پیام جدید</string>
+    <string name="notif_unknown_sender">پیام از مخاطب ناشناس</string>
+    <string name="notif_unknown_sender_body">کسی برای شما پیام فرستاده. او را به مخاطبین اضافه کنید تا پیام را بخوانید.</string>
 
     <!-- Common -->
     <string name="ok">باشه</string>
@@ -128,4 +130,20 @@
 
     <!-- Notification permission -->
     <string name="notif_permission_denied">دسترسی اعلان رد شد</string>
+
+    <!-- Sync -->
+    <string name="sync_now">همگام‌سازی</string>
+
+    <!-- Date headers in chat -->
+    <string name="date_today">امروز</string>
+    <string name="date_yesterday">دیروز</string>
+
+    <!-- Re-key contact -->
+    <string name="rekey_title">به‌روزرسانی کلید مخاطب</string>
+    <string name="rekey_message">کد دعوت جدید مخاطب را وارد کنید تا کلید رمزنگاری او آپدیت شود. تاریخچه چت شما حفظ می‌شود.</string>
+    <string name="rekey_hint">کد دعوت جدید</string>
+    <string name="rekey_confirm">آپدیت کلید</string>
+    <string name="rekey_success">کلید مخاطب آپدیت شد. پیام‌های بعدی با کلید جدید ارسال می‌شوند.</string>
+    <string name="rekey_error_invalid">کد دعوت نامعتبر است</string>
+    <string name="rekey_error_mismatch">این کد متعلق به کاربر دیگری است. کلید آپدیت نشد.</string>
 </resources>

@@ -33,7 +33,7 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
             val prefs = RaazPreferences(applicationContext)
 
             val repo = MessageRepository(
-                MessageDao(db.db), SessionDao(db.db), prefs, settings.serverUrl
+                MessageDao(db.db), SessionDao(db.db), prefs, settings.serverUrl, applicationContext
             )
 
             val sent = repo.syncOutgoing()

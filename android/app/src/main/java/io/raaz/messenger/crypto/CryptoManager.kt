@@ -17,8 +17,8 @@ object CryptoManager {
     private var cachedPublicKey: ByteArray? = null
 
     fun loadKeys(privateKeyB64: String, publicKeyB64: String) {
-        cachedPrivateKey = KeyManager.publicKeyFromB64(privateKeyB64)
-        cachedPublicKey = KeyManager.publicKeyFromB64(publicKeyB64)
+        cachedPrivateKey = KeyManager.keyFromB64(privateKeyB64)
+        cachedPublicKey = KeyManager.keyFromB64(publicKeyB64)
         AppLogger.d(TAG, "Keys loaded into memory")
     }
 

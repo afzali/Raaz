@@ -18,6 +18,10 @@
 # ZXing
 -keep class com.google.zxing.** { *; }
 -keep class com.journeyapps.** { *; }
+-dontwarn java.awt.Component
+-dontwarn java.awt.GraphicsEnvironment
+-dontwarn java.awt.HeadlessException
+-dontwarn java.awt.Window
 
 # Navigation
 -keepnames class androidx.navigation.fragment.NavHostFragment

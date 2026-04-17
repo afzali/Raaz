@@ -41,7 +41,10 @@ object KeyManager {
     fun generateMessageId(): String = UUID.randomUUID().toString()
     fun generateSessionId(): String = UUID.randomUUID().toString()
 
-    fun publicKeyFromB64(b64: String): ByteArray = Base64.getDecoder().decode(b64)
+    fun keyFromB64(b64: String): ByteArray = Base64.getDecoder().decode(b64)
+
+    @Deprecated("Use keyFromB64", ReplaceWith("keyFromB64(b64)"))
+    fun publicKeyFromB64(b64: String): ByteArray = keyFromB64(b64)
 
     fun x25519SharedSecret(myPrivateKey: ByteArray, theirPublicKey: ByteArray): ByteArray {
         val shared = ByteArray(DiffieHellman.SCALARMULT_BYTES)

@@ -23,13 +23,23 @@ object QrCodeHelper {
     fun encodeContact(userId: String, deviceId: String, publicKey: String, serverUrl: String): String {
         val payload = ContactPayload(userId, deviceId, publicKey, serverUrl)
         val json = gson.toJson(payload)
-        return Base64.getEncoder().encodeToString(json.toByteArray())
+        // URL-safe Base64 (no padding) — safe to paste, share, and scan
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(json.toByteArray())
     }
 
     fun decodeContact(encoded: String): ContactPayload? {
         return try {
-            val json = String(Base64.getDecoder().decode(encoded))
-            gson.fromJson(json, ContactPayload::class.java)
+            // Accept URL-safe (no padding), URL-safe (padded), and standard Base64
+            val cleaned = encoded.trim()
+            val bytes = try {
+                Base64.getUrlDecoder().decode(cleaned)
+            } catch (_: Exception) {
+                Base64.getDecoder().decode(cleaned)
+            }
+            val json = String(bytes)
+            val payload = gson.fromJson(json, ContactPayload::class.java)
+            // Validate required fields
+            if (payload.userId.isBlank() || payload.publicKey.isBlank()) null else payload
         } catch (e: Exception) {
             null
         }

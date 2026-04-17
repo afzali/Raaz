@@ -22,4 +22,7 @@
     <dimen name="pin_button_size">72dp</dimen>
     <dimen name="pin_dot_size">14dp</dimen>
     <dimen name="pin_dot_spacing">16dp</dimen>
+
+    <dimen name="bubble_group_margin">6dp</dimen>
+    <dimen name="bubble_seq_margin">1dp</dimen>
 </resources>

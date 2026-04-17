@@ -101,6 +101,8 @@
     <string name="notif_channel_messages_desc">New message notifications</string>
     <string name="notif_new_message">New message received</string>
     <string name="notif_new_message_multi">%d new messages</string>
+    <string name="notif_unknown_sender">Message from unknown contact</string>
+    <string name="notif_unknown_sender_body">Someone sent you a message. Add them as a contact to read it.</string>
 
     <!-- Common -->
     <string name="ok">OK</string>
@@ -128,5 +130,21 @@
 
     <!-- Notification permission -->
     <string name="notif_permission_denied">Notification permission denied</string>
+
+    <!-- Sync -->
+    <string name="sync_now">Sync now</string>
+
+    <!-- Date headers in chat -->
+    <string name="date_today">Today</string>
+    <string name="date_yesterday">Yesterday</string>
+
+    <!-- Re-key contact -->
+    <string name="rekey_title">Update Contact Key</string>
+    <string name="rekey_message">Paste the new invite code from your contact to update their encryption key. Your chat history will be preserved.</string>
+    <string name="rekey_hint">New invite code</string>
+    <string name="rekey_confirm">Update Key</string>
+    <string name="rekey_success">Contact key updated. Future messages use the new key.</string>
+    <string name="rekey_error_invalid">Invalid invite code</string>
+    <string name="rekey_error_mismatch">This code belongs to a different user. Key not updated.</string>
 </resources>
 <!-- will be replaced properly -->

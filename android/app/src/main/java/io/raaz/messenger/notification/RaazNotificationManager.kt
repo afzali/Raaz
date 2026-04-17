@@ -15,6 +15,7 @@ object RaazNotificationManager {
 
     private const val CHANNEL_ID = "raaz_messages"
     private const val NOTIF_ID_MESSAGES = 1001
+    private const val NOTIF_ID_UNKNOWN = 1002
 
     fun createChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -28,6 +29,28 @@ object RaazNotificationManager {
             val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             nm.createNotificationChannel(channel)
         }
+    }
+
+    fun showUnknownSenderNotification(context: Context, count: Int = 1) {
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context, 1, intent, PendingIntent.FLAG_IMMUTABLE
+        )
+        val title = context.getString(R.string.notif_unknown_sender)
+        val body = context.getString(R.string.notif_unknown_sender_body)
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_shield)
+            .setContentTitle(title)
+            .setContentText(body)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .build()
+        try {
+            NotificationManagerCompat.from(context).notify(NOTIF_ID_UNKNOWN, notification)
+        } catch (e: SecurityException) { }
     }
 
     fun showNewMessageNotification(context: Context, count: Int = 1) {

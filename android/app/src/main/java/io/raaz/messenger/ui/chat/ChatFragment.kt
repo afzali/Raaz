@@ -5,16 +5,21 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
+import io.raaz.messenger.R
 import io.raaz.messenger.databinding.FragmentChatBinding
 import io.raaz.messenger.ui.SharedViewModel
+import io.raaz.messenger.util.ForegroundSyncManager
 import io.raaz.messenger.util.LocaleManager
 import io.raaz.messenger.util.hideKeyboard
+import io.raaz.messenger.util.toast
 
 class ChatFragment : Fragment() {
 
@@ -41,6 +46,13 @@ class ChatFragment : Fragment() {
         binding.toolbar.title = args.contactName
         binding.toolbar.setNavigationOnClickListener { findNavController().navigateUp() }
 
+        binding.toolbar.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                R.id.action_rekey -> { showRekeyDialog(); true }
+                else -> false
+            }
+        }
+
         adapter = MessageAdapter()
         val layoutManager = LinearLayoutManager(requireContext()).apply {
             stackFromEnd = true
@@ -58,11 +70,22 @@ class ChatFragment : Fragment() {
         }
 
         viewModel.messages.observe(viewLifecycleOwner) { messages ->
-            adapter.submitList(messages) {
+            adapter.submitMessages(messages, requireContext()) {
                 if (messages.isNotEmpty()) {
-                    binding.rvMessages.scrollToPosition(messages.size - 1)
+                    binding.rvMessages.scrollToPosition(adapter.itemCount - 1)
                 }
             }
+        }
+
+        viewModel.rekeyResult.observe(viewLifecycleOwner) { result ->
+            result ?: return@observe
+            val msg = when (result) {
+                is ChatViewModel.RekeyResult.Success      -> getString(R.string.rekey_success)
+                is ChatViewModel.RekeyResult.UserMismatch -> getString(R.string.rekey_error_mismatch)
+                is ChatViewModel.RekeyResult.InvalidCode  -> getString(R.string.rekey_error_invalid)
+            }
+            toast(msg)
+            viewModel.clearRekeyResult()
         }
 
         val dbKey = sharedViewModel.getDbKey()
@@ -70,6 +93,34 @@ class ChatFragment : Fragment() {
             viewModel.init(args.sessionId, dbKey)
         }
         viewModel.syncIncoming()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        ForegroundSyncManager.startPolling()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        ForegroundSyncManager.stopPolling()
+    }
+
+    private fun showRekeyDialog() {
+        val input = EditText(requireContext()).apply {
+            hint = getString(R.string.rekey_hint)
+            inputType = android.text.InputType.TYPE_CLASS_TEXT
+            setPadding(48, 24, 48, 24)
+        }
+        AlertDialog.Builder(requireContext())
+            .setTitle(getString(R.string.rekey_title))
+            .setMessage(getString(R.string.rekey_message))
+            .setView(input)
+            .setPositiveButton(getString(R.string.rekey_confirm)) { _, _ ->
+                val code = input.text?.toString()?.trim() ?: ""
+                if (code.isNotBlank()) viewModel.rekeyContact(code)
+            }
+            .setNegativeButton(getString(R.string.cancel), null)
+            .show()
     }
 
     override fun onDestroyView() {

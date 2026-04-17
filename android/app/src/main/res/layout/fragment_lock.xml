@@ -45,7 +45,7 @@
         app:layout_constraintTop_toBottomOf="@id/tv_title"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/et_password" />
+        app:layout_constraintBottom_toTopOf="@id/til_password" />
 
     <!-- Password input -->
     <com.google.android.material.textfield.TextInputLayout

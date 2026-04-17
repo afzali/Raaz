@@ -11,6 +11,7 @@ data class Session(
     // Joined fields (not in DB, filled by query)
     val contactName: String = "",
     val contactPublicKey: String = "",
+    val contactDeviceId: String = "",
     val lastMessagePreview: String = "",
     val unreadCount: Int = 0
 )

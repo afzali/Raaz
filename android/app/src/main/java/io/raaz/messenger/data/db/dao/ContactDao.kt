@@ -40,6 +40,16 @@ class ContactDao(private val db: SQLiteDatabase) {
         db.update("contacts", cv, "id=?", arrayOf(id))
     }
 
+    fun updateKeyAndDevice(id: String, publicKey: String, deviceId: String, serverUrl: String) {
+        val cv = ContentValues().apply {
+            put("public_key", publicKey)
+            put("device_id", deviceId)
+            put("server_url", serverUrl)
+            put("is_verified", 1)
+        }
+        db.update("contacts", cv, "id=?", arrayOf(id))
+    }
+
     private fun Contact.toContentValues() = ContentValues().apply {
         put("id", id)
         put("display_name", displayName)

@@ -62,9 +62,9 @@ object MessageCrypto {
                 return null
             }
             val nonceLen = AEAD.XCHACHA20POLY1305_IETF_NPUBBYTES
-            val ephPub = payload.slice(0 until 32).toByteArray()
-            val nonce24 = payload.slice(32 until 32 + nonceLen).toByteArray()
-            val ctBytes = payload.slice(32 + nonceLen until payload.size).toByteArray()
+            val ephPub = payload.sliceArray(0 until 32)
+            val nonce24 = payload.sliceArray(32 until 32 + nonceLen)
+            val ctBytes = payload.sliceArray(32 + nonceLen until payload.size)
 
             val shared = KeyManager.x25519SharedSecret(privateKey, ephPub)
             val msgKey = hkdf(shared, HKDF_INFO, KEY_LEN)

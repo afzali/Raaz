@@ -7,6 +7,7 @@ import androidx.lifecycle.MutableLiveData
 import io.raaz.messenger.data.db.RaazDatabase
 import io.raaz.messenger.data.db.dao.SettingsDao
 import io.raaz.messenger.data.model.AppSettings
+import io.raaz.messenger.util.ForegroundSyncManager
 
 class SharedViewModel(app: Application) : AndroidViewModel(app) {
 
@@ -18,6 +19,7 @@ class SharedViewModel(app: Application) : AndroidViewModel(app) {
     fun setDbKey(key: String) {
         _dbKey.value = key
         _db = RaazDatabase.getInstance(getApplication(), key)
+        ForegroundSyncManager.init(getApplication(), key)
     }
 
     fun getDb(): RaazDatabase? = _db

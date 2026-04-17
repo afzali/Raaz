@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="spacing_xs">4dp</dimen>
+    <dimen name="spacing_sm">8dp</dimen>
+    <dimen name="spacing_md">16dp</dimen>
+    <dimen name="spacing_lg">24dp</dimen>
+    <dimen name="spacing_xl">32dp</dimen>
+    <dimen name="spacing_xxl">48dp</dimen>
+
+    <dimen name="bubble_radius">18dp</dimen>
+    <dimen name="bubble_radius_small">4dp</dimen>
+    <dimen name="bubble_max_width">280dp</dimen>
+    <dimen name="bubble_padding_h">12dp</dimen>
+    <dimen name="bubble_padding_v">8dp</dimen>
+
+    <dimen name="avatar_size">44dp</dimen>
+    <dimen name="avatar_size_small">32dp</dimen>
+
+    <dimen name="input_height">52dp</dimen>
+    <dimen name="toolbar_height">56dp</dimen>
+
+    <dimen name="pin_button_size">72dp</dimen>
+    <dimen name="pin_dot_size">14dp</dimen>
+    <dimen name="pin_dot_spacing">16dp</dimen>
+</resources>

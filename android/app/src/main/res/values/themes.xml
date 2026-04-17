@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.Raaz" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/raaz_primary</item>
+        <item name="colorPrimaryDark">@color/raaz_primary_dark</item>
+        <item name="colorAccent">@color/raaz_accent</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:fontFamily">@font/dana</item>
+    </style>
+
+    <style name="Theme.Raaz.Lock" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/raaz_primary</item>
+        <item name="android:windowBackground">@color/lock_bg</item>
+        <item name="android:statusBarColor">@color/lock_bg</item>
+        <item name="android:navigationBarColor">@color/lock_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+
+    <!-- Message bubble styles -->
+    <style name="MessageBubble.Outgoing">
+        <item name="android:background">@drawable/bg_bubble_outgoing</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:padding">12dp</item>
+    </style>
+
+    <style name="MessageBubble.Incoming">
+        <item name="android:background">@drawable/bg_bubble_incoming</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
+        <item name="android:padding">12dp</item>
+    </style>
+
+    <!-- Toolbar style -->
+    <style name="Widget.Raaz.Toolbar" parent="Widget.Material3.Toolbar">
+        <item name="titleTextAppearance">@style/TextAppearance.Raaz.Toolbar</item>
+    </style>
+
+    <style name="TextAppearance.Raaz.Toolbar" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:fontFamily">@font/dana</item>
+    </style>
+
+</resources>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="database" path="raaz_main.db" />
+        <exclude domain="database" path="raaz_auth.db" />
+        <exclude domain="sharedpref" path="raaz_secure_prefs.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="database" path="raaz_main.db" />
+        <exclude domain="database" path="raaz_auth.db" />
+    </device-transfer>
+</data-extraction-rules>

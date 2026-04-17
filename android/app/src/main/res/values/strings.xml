@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Raaz</string>
+
+    <!-- Lock screen -->
+    <string name="lock_title">Raaz</string>
+    <string name="lock_subtitle">Secure Messenger</string>
+    <string name="lock_enter_password">Enter your password</string>
+    <string name="lock_wrong_password">Wrong password</string>
+    <string name="lock_attempts_remaining">%d attempts remaining</string>
+    <string name="lock_locked_until">Locked until %s</string>
+    <string name="lock_data_wiped">All data has been wiped for security</string>
+    <string name="lock_biometric_prompt">Use biometrics to unlock</string>
+
+    <!-- Setup screen -->
+    <string name="setup_title">Welcome to Raaz</string>
+    <string name="setup_subtitle">Set up your secure messenger</string>
+    <string name="setup_create_password">Create a password</string>
+    <string name="setup_confirm_password">Confirm password</string>
+    <string name="setup_password_hint">At least 6 characters</string>
+    <string name="setup_passwords_dont_match">Passwords do not match</string>
+    <string name="setup_password_too_short">Password must be at least 6 characters</string>
+    <string name="setup_server_url">Server URL</string>
+    <string name="setup_server_url_hint">https://relay.raaz.io</string>
+    <string name="setup_generating_keys">Generating encryption keys…</string>
+    <string name="setup_complete">Setup complete</string>
+    <string name="setup_language">Language</string>
+    <string name="setup_language_fa">فارسی</string>
+    <string name="setup_language_en">English</string>
+
+    <!-- Chats screen -->
+    <string name="chats_title">Raaz</string>
+    <string name="chats_empty">No conversations yet</string>
+    <string name="chats_empty_sub">Add a contact to start a secure chat</string>
+    <string name="chats_add_contact">Add contact</string>
+
+    <!-- Chat screen -->
+    <string name="chat_type_message">Type a message…</string>
+    <string name="chat_send">Send</string>
+    <string name="chat_message_deleted">Message deleted</string>
+    <string name="chat_message_expired">Message expired</string>
+    <string name="chat_session_info">Session info</string>
+    <string name="chat_clear_history">Clear history</string>
+
+    <!-- Add contact -->
+    <string name="add_contact_title">Add contact</string>
+    <string name="add_contact_scan_qr">Scan QR code</string>
+    <string name="add_contact_enter_code">Enter invite code</string>
+    <string name="add_contact_show_my_qr">My QR code</string>
+    <string name="add_contact_code_hint">Paste invite code here</string>
+    <string name="add_contact_add">Add</string>
+    <string name="add_contact_invalid_code">Invalid invite code</string>
+    <string name="add_contact_added">Contact added</string>
+    <string name="add_contact_name_hint">Display name</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_system">System default</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_lock_timeout">Auto-lock timeout</string>
+    <string name="settings_lock_1min">1 minute</string>
+    <string name="settings_lock_5min">5 minutes</string>
+    <string name="settings_lock_15min">15 minutes</string>
+    <string name="settings_lock_30min">30 minutes</string>
+    <string name="settings_lock_never">Never</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_notifications_desc">Show notification when messages arrive</string>
+    <string name="settings_server_url">Server URL</string>
+    <string name="settings_change_password">Change password</string>
+    <string name="settings_danger_zone">Danger zone</string>
+    <string name="settings_wipe_data">Wipe all data</string>
+    <string name="settings_wipe_confirm">This will permanently delete all messages and contacts. Continue?</string>
+    <string name="settings_logs">View logs</string>
+    <string name="settings_my_device_id">Device ID</string>
+    <string name="settings_my_public_key">My public key</string>
+
+    <!-- Log viewer -->
+    <string name="logs_title">Logs</string>
+    <string name="logs_search_hint">Search logs…</string>
+    <string name="logs_empty">No logs yet</string>
+    <string name="logs_clear">Clear logs</string>
+    <string name="logs_filter_all">All</string>
+    <string name="logs_filter_debug">Debug</string>
+    <string name="logs_filter_info">Info</string>
+    <string name="logs_filter_warn">Warn</string>
+    <string name="logs_filter_error">Error</string>
+
+    <!-- Message status -->
+    <string name="msg_status_queued">Queued</string>
+    <string name="msg_status_sent">Sent</string>
+    <string name="msg_status_delivered">Delivered</string>
+    <string name="msg_status_confirmed">Confirmed</string>
+    <string name="msg_status_expired">Expired</string>
+
+    <!-- Notifications -->
+    <string name="notif_channel_messages">Messages</string>
+    <string name="notif_channel_messages_desc">New message notifications</string>
+    <string name="notif_new_message">New message received</string>
+    <string name="notif_new_message_multi">%d new messages</string>
+
+    <!-- Common -->
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
+    <string name="copy">Copy</string>
+    <string name="share">Share</string>
+    <string name="error_network">Network error. Please try again.</string>
+    <string name="error_unknown">Something went wrong</string>
+    <string name="error_decryption">Failed to decrypt message</string>
+    <string name="permission_camera_required">Camera permission required to scan QR code</string>
+</resources>

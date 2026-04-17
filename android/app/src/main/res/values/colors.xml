@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand colors -->
+    <color name="raaz_primary">#1A6B5A</color>
+    <color name="raaz_primary_dark">#0F4A3D</color>
+    <color name="raaz_primary_light">#2D8F78</color>
+    <color name="raaz_secondary">#4CAF82</color>
+    <color name="raaz_accent">#00C896</color>
+
+    <!-- Surface colors (light) -->
+    <color name="surface_light">#FAFAFA</color>
+    <color name="surface_variant_light">#F0F4F2</color>
+    <color name="on_surface_light">#1A1A1A</color>
+    <color name="on_surface_variant_light">#555555</color>
+
+    <!-- Surface colors (dark) -->
+    <color name="surface_dark">#0F1512</color>
+    <color name="surface_variant_dark">#1A2420</color>
+    <color name="on_surface_dark">#E8F0EC</color>
+    <color name="on_surface_variant_dark">#9AB5AA</color>
+
+    <!-- Message bubble colors -->
+    <color name="bubble_outgoing">#1A6B5A</color>
+    <color name="bubble_outgoing_dark">#1F7A67</color>
+    <color name="bubble_incoming">#FFFFFF</color>
+    <color name="bubble_incoming_dark">#1E2B27</color>
+
+    <!-- Status colors -->
+    <color name="status_delivered">#4CAF82</color>
+    <color name="status_pending">#9AB5AA</color>
+    <color name="status_error">#E53935</color>
+    <color name="status_expired">#757575</color>
+
+    <!-- Lock screen -->
+    <color name="lock_bg">#0A0F0D</color>
+    <color name="pin_dot_active">#00C896</color>
+    <color name="pin_dot_inactive">#2D3D38</color>
+    <color name="pin_button_bg">#1A2420</color>
+    <color name="pin_button_pressed">#243530</color>
+
+    <!-- Divider / outline -->
+    <color name="divider_light">#E0E8E4</color>
+    <color name="divider_dark">#1F2E29</color>
+</resources>

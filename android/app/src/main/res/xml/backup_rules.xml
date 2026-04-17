@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <exclude domain="database" path="raaz_main.db" />
+    <exclude domain="database" path="raaz_auth.db" />
+    <exclude domain="sharedpref" path="raaz_secure_prefs.xml" />
+    <exclude domain="file" path="keys/" />
+</full-backup-content>

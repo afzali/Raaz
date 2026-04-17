@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/lockFragment">
+
+    <fragment
+        android:id="@+id/lockFragment"
+        android:name="io.raaz.messenger.ui.lock.LockFragment"
+        android:label="@string/lock_title"
+        tools:layout="@layout/fragment_lock">
+        <action
+            android:id="@+id/action_lock_to_setup"
+            app:destination="@id/setupFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+        <action
+            android:id="@+id/action_lock_to_chats"
+            app:destination="@id/chatsFragment"
+            app:enterAnim="@anim/fade_in"
+            app:exitAnim="@anim/fade_out"
+            app:popUpTo="@id/lockFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/setupFragment"
+        android:name="io.raaz.messenger.ui.setup.SetupFragment"
+        android:label="@string/setup_title"
+        tools:layout="@layout/fragment_setup">
+        <action
+            android:id="@+id/action_setup_to_chats"
+            app:destination="@id/chatsFragment"
+            app:enterAnim="@anim/fade_in"
+            app:exitAnim="@anim/fade_out"
+            app:popUpTo="@id/setupFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/chatsFragment"
+        android:name="io.raaz.messenger.ui.chats.ChatsFragment"
+        android:label="@string/chats_title"
+        tools:layout="@layout/fragment_chats">
+        <action
+            android:id="@+id/action_chats_to_chat"
+            app:destination="@id/chatFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right">
+            <argument
+                android:name="sessionId"
+                app:argType="string" />
+            <argument
+                android:name="contactName"
+                app:argType="string" />
+        </action>
+        <action
+            android:id="@+id/action_chats_to_add_contact"
+            app:destination="@id/addContactFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+        <action
+            android:id="@+id/action_chats_to_settings"
+            app:destination="@id/settingsFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/chatFragment"
+        android:name="io.raaz.messenger.ui.chat.ChatFragment"
+        android:label=""
+        tools:layout="@layout/fragment_chat">
+        <argument
+            android:name="sessionId"
+            app:argType="string" />
+        <argument
+            android:name="contactName"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/addContactFragment"
+        android:name="io.raaz.messenger.ui.addcontact.AddContactFragment"
+        android:label="@string/add_contact_title"
+        tools:layout="@layout/fragment_add_contact" />
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="io.raaz.messenger.ui.settings.SettingsFragment"
+        android:label="@string/settings_title"
+        tools:layout="@layout/fragment_settings">
+        <action
+            android:id="@+id/action_settings_to_logs"
+            app:destination="@id/logViewerFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/logViewerFragment"
+        android:name="io.raaz.messenger.ui.logs.LogViewerFragment"
+        android:label="@string/logs_title"
+        tools:layout="@layout/fragment_log_viewer" />
+
+</navigation>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Shield icon as app logo -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M54,20 L78,30 L78,50 C78,64 66,76 54,82 C42,76 30,64 30,50 L30,30 Z" />
+    <path
+        android:fillColor="@color/raaz_primary"
+        android:pathData="M54,35 L70,42 L70,52 C70,62 62,70 54,74 C46,70 38,62 38,52 L38,42 Z" />
+    <!-- Lock icon inside shield -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M48,54 L60,54 L60,62 L48,62 Z" />
+    <path
+        android:strokeColor="@android:color/white"
+        android:strokeWidth="3"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M50,54 L50,50 C50,47 58,47 58,50 L58,54" />
+</vector>

@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">راز</string>
+
+    <!-- Lock screen -->
+    <string name="lock_title">راز</string>
+    <string name="lock_subtitle">پیام‌رسان امن</string>
+    <string name="lock_enter_password">رمز عبور را وارد کنید</string>
+    <string name="lock_wrong_password">رمز عبور اشتباه است</string>
+    <string name="lock_attempts_remaining">%d تلاش باقی مانده</string>
+    <string name="lock_locked_until">قفل شده تا %s</string>
+    <string name="lock_data_wiped">تمام اطلاعات به دلایل امنیتی پاک شد</string>
+    <string name="lock_biometric_prompt">برای باز کردن قفل از بیومتریک استفاده کنید</string>
+
+    <!-- Setup screen -->
+    <string name="setup_title">خوش آمدید به راز</string>
+    <string name="setup_subtitle">پیام‌رسان امن خود را راه‌اندازی کنید</string>
+    <string name="setup_create_password">رمز عبور بسازید</string>
+    <string name="setup_confirm_password">تأیید رمز عبور</string>
+    <string name="setup_password_hint">حداقل ۶ کاراکتر</string>
+    <string name="setup_passwords_dont_match">رمزها یکسان نیستند</string>
+    <string name="setup_password_too_short">رمز باید حداقل ۶ کاراکتر باشد</string>
+    <string name="setup_server_url">آدرس سرور</string>
+    <string name="setup_server_url_hint">https://relay.raaz.io</string>
+    <string name="setup_generating_keys">در حال ساخت کلیدهای رمزنگاری…</string>
+    <string name="setup_complete">راه‌اندازی کامل شد</string>
+    <string name="setup_language">زبان</string>
+    <string name="setup_language_fa">فارسی</string>
+    <string name="setup_language_en">English</string>
+
+    <!-- Chats screen -->
+    <string name="chats_title">راز</string>
+    <string name="chats_empty">هنوز هیچ مکالمه‌ای نیست</string>
+    <string name="chats_empty_sub">یک مخاطب اضافه کنید تا گفتگوی امن آغاز شود</string>
+    <string name="chats_add_contact">افزودن مخاطب</string>
+
+    <!-- Chat screen -->
+    <string name="chat_type_message">پیام بنویسید…</string>
+    <string name="chat_send">ارسال</string>
+    <string name="chat_message_deleted">پیام حذف شد</string>
+    <string name="chat_message_expired">پیام منقضی شد</string>
+    <string name="chat_session_info">اطلاعات گفتگو</string>
+    <string name="chat_clear_history">پاک کردن تاریخچه</string>
+
+    <!-- Add contact -->
+    <string name="add_contact_title">افزودن مخاطب</string>
+    <string name="add_contact_scan_qr">اسکن کد QR</string>
+    <string name="add_contact_enter_code">وارد کردن کد دعوت</string>
+    <string name="add_contact_show_my_qr">کد QR من</string>
+    <string name="add_contact_code_hint">کد دعوت را اینجا بچسبانید</string>
+    <string name="add_contact_add">افزودن</string>
+    <string name="add_contact_invalid_code">کد دعوت نامعتبر است</string>
+    <string name="add_contact_added">مخاطب اضافه شد</string>
+    <string name="add_contact_name_hint">نام نمایشی</string>
+
+    <!-- Settings -->
+    <string name="settings_title">تنظیمات</string>
+    <string name="settings_language">زبان</string>
+    <string name="settings_theme">تم</string>
+    <string name="settings_theme_system">پیش‌فرض سیستم</string>
+    <string name="settings_theme_light">روشن</string>
+    <string name="settings_theme_dark">تاریک</string>
+    <string name="settings_lock_timeout">زمان قفل خودکار</string>
+    <string name="settings_lock_1min">۱ دقیقه</string>
+    <string name="settings_lock_5min">۵ دقیقه</string>
+    <string name="settings_lock_15min">۱۵ دقیقه</string>
+    <string name="settings_lock_30min">۳۰ دقیقه</string>
+    <string name="settings_lock_never">هرگز</string>
+    <string name="settings_notifications">اعلان‌ها</string>
+    <string name="settings_notifications_desc">نمایش اعلان هنگام دریافت پیام</string>
+    <string name="settings_server_url">آدرس سرور</string>
+    <string name="settings_change_password">تغییر رمز عبور</string>
+    <string name="settings_danger_zone">منطقه خطر</string>
+    <string name="settings_wipe_data">پاک کردن تمام اطلاعات</string>
+    <string name="settings_wipe_confirm">تمام پیام‌ها و مخاطبین به صورت دائمی حذف خواهند شد. ادامه می‌دهید؟</string>
+    <string name="settings_logs">مشاهده لاگ‌ها</string>
+    <string name="settings_my_device_id">شناسه دستگاه</string>
+    <string name="settings_my_public_key">کلید عمومی من</string>
+
+    <!-- Log viewer -->
+    <string name="logs_title">لاگ‌ها</string>
+    <string name="logs_search_hint">جستجو در لاگ‌ها…</string>
+    <string name="logs_empty">هنوز لاگی نیست</string>
+    <string name="logs_clear">پاک کردن لاگ‌ها</string>
+    <string name="logs_filter_all">همه</string>
+    <string name="logs_filter_debug">دیباگ</string>
+    <string name="logs_filter_info">اطلاعات</string>
+    <string name="logs_filter_warn">هشدار</string>
+    <string name="logs_filter_error">خطا</string>
+
+    <!-- Message status -->
+    <string name="msg_status_queued">در صف</string>
+    <string name="msg_status_sent">ارسال شد</string>
+    <string name="msg_status_delivered">تحویل داده شد</string>
+    <string name="msg_status_confirmed">تأیید شد</string>
+    <string name="msg_status_expired">منقضی شد</string>
+
+    <!-- Notifications -->
+    <string name="notif_channel_messages">پیام‌ها</string>
+    <string name="notif_channel_messages_desc">اعلان‌های پیام جدید</string>
+    <string name="notif_new_message">پیام جدید دریافت شد</string>
+    <string name="notif_new_message_multi">%d پیام جدید</string>
+
+    <!-- Common -->
+    <string name="ok">باشه</string>
+    <string name="cancel">لغو</string>
+    <string name="save">ذخیره</string>
+    <string name="delete">حذف</string>
+    <string name="copy">کپی</string>
+    <string name="share">اشتراک‌گذاری</string>
+    <string name="error_network">خطای شبکه. دوباره تلاش کنید.</string>
+    <string name="error_unknown">مشکلی پیش آمد</string>
+    <string name="error_decryption">رمزگشایی پیام ناموفق بود</string>
+    <string name="permission_camera_required">برای اسکن کد QR نیاز به دسترسی دوربین دارید</string>
+</resources>

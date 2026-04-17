@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.Raaz" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/raaz_primary_light</item>
+        <item name="colorPrimaryDark">@color/raaz_primary</item>
+        <item name="colorAccent">@color/raaz_accent</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:fontFamily">@font/dana</item>
+    </style>
+
+    <style name="Theme.Raaz.Lock" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/raaz_primary</item>
+        <item name="android:windowBackground">@color/lock_bg</item>
+        <item name="android:statusBarColor">@color/lock_bg</item>
+        <item name="android:navigationBarColor">@color/lock_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+
+</resources>

@@ -6,10 +6,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import io.raaz.messenger.R
 import io.raaz.messenger.databinding.FragmentLockBinding
+import io.raaz.messenger.ui.SharedViewModel
 import io.raaz.messenger.util.DateFormatter
 import io.raaz.messenger.util.LocaleManager
 import io.raaz.messenger.util.hide
@@ -19,6 +21,7 @@ class LockFragment : Fragment() {
 
     private var _binding: FragmentLockBinding? = null
     private val binding get() = _binding!!
+    private val sharedViewModel: SharedViewModel by activityViewModels()
     private val viewModel: LockViewModel by viewModels()
 
     override fun onAttach(context: Context) {
@@ -33,7 +36,6 @@ class LockFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // If setup not done, go to setup screen
         if (!viewModel.isSetupComplete) {
             findNavController().navigate(R.id.action_lock_to_setup)
             return
@@ -68,6 +70,7 @@ class LockFragment : Fragment() {
             }
             is LockViewModel.LockState.Unlocked -> {
                 binding.progress.hide()
+                sharedViewModel.setDbKey(state.dbKey)
                 findNavController().navigate(R.id.action_lock_to_chats)
             }
             is LockViewModel.LockState.WrongPassword -> {
@@ -95,7 +98,6 @@ class LockFragment : Fragment() {
                 binding.tvError.text = getString(R.string.lock_data_wiped)
                 binding.tvError.show()
                 binding.btnUnlock.isEnabled = false
-                // Restart flow to setup
                 findNavController().navigate(R.id.action_lock_to_setup)
             }
         }

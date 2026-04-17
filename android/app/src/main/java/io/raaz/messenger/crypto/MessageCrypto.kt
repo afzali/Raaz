@@ -2,6 +2,7 @@ package io.raaz.messenger.crypto
 
 import com.goterl.lazysodium.LazySodiumAndroid
 import com.goterl.lazysodium.SodiumAndroid
+import com.goterl.lazysodium.interfaces.AEAD
 import io.raaz.messenger.util.AppLogger
 import java.security.MessageDigest
 import java.security.SecureRandom
@@ -32,12 +33,11 @@ object MessageCrypto {
         val shared = KeyManager.x25519SharedSecret(ephKeyPair.privateKey, recipientPublicKey)
         val msgKey = hkdf(shared, HKDF_INFO, KEY_LEN)
 
-        val nonce = ByteArray(sodium.cryptoSecretStreamAbytes().toInt().coerceAtLeast(24))
-        random.nextBytes(nonce)
-        val nonce24 = nonce.take(24).toByteArray()
+        val nonce24 = ByteArray(AEAD.XCHACHA20POLY1305_IETF_NPUBBYTES)
+        random.nextBytes(nonce24)
 
         val ptBytes = plaintext.encodeToByteArray()
-        val ctBytes = ByteArray(ptBytes.size + sodium.cryptoAeadXChaCha20Poly1305IetfABYTES().toInt())
+        val ctBytes = ByteArray(ptBytes.size + AEAD.XCHACHA20POLY1305_IETF_ABYTES)
 
         val result = sodium.cryptoAeadXChaCha20Poly1305IetfEncrypt(
             ctBytes, null, ptBytes, ptBytes.size.toLong(),
@@ -57,18 +57,19 @@ object MessageCrypto {
     fun decrypt(payloadB64: String, privateKey: ByteArray): String? {
         return try {
             val payload = Base64.getDecoder().decode(payloadB64)
-            if (payload.size < 32 + 24 + sodium.cryptoAeadXChaCha20Poly1305IetfABYTES().toInt()) {
+            if (payload.size < 32 + AEAD.XCHACHA20POLY1305_IETF_NPUBBYTES + AEAD.XCHACHA20POLY1305_IETF_ABYTES) {
                 AppLogger.w(TAG, "Payload too short to decrypt")
                 return null
             }
+            val nonceLen = AEAD.XCHACHA20POLY1305_IETF_NPUBBYTES
             val ephPub = payload.slice(0 until 32).toByteArray()
-            val nonce24 = payload.slice(32 until 56).toByteArray()
-            val ctBytes = payload.slice(56 until payload.size).toByteArray()
+            val nonce24 = payload.slice(32 until 32 + nonceLen).toByteArray()
+            val ctBytes = payload.slice(32 + nonceLen until payload.size).toByteArray()
 
             val shared = KeyManager.x25519SharedSecret(privateKey, ephPub)
             val msgKey = hkdf(shared, HKDF_INFO, KEY_LEN)
 
-            val ptBytes = ByteArray(ctBytes.size - sodium.cryptoAeadXChaCha20Poly1305IetfABYTES().toInt())
+            val ptBytes = ByteArray(ctBytes.size - AEAD.XCHACHA20POLY1305_IETF_ABYTES)
             val result = sodium.cryptoAeadXChaCha20Poly1305IetfDecrypt(
                 ptBytes, null, null, ctBytes, ctBytes.size.toLong(),
                 null, 0L, nonce24, msgKey

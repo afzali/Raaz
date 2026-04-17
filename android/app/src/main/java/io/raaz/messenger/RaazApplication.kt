@@ -20,6 +20,8 @@ class RaazApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
+        System.loadLibrary("sqlcipher")
+
         // Init AuthDatabase and wire log writer
         val authDbKey = PasswordManager.generateAuthDbKey(this)
         val authDb = AuthDatabase.getInstance(this, authDbKey)

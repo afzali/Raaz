@@ -85,9 +85,7 @@ class MessageRepository(
         val plaintext = CryptoManager.decryptMessage(serverMsg.ciphertext) ?: return false
         AppLogger.d(TAG, "Decrypted incoming message ${serverMsg.serverMessageId}")
 
-        // Find which session this belongs to (by matching sender device ID)
-        val sessions = sessionDao.getAllWithPreview()
-        val session = sessions.firstOrNull() // TODO: match by sender device ID
+        val session = sessionDao.getByContactDeviceId(serverMsg.senderDeviceId)
 
         val sessionId = session?.id ?: run {
             AppLogger.w(TAG, "No session found for message ${serverMsg.serverMessageId}")

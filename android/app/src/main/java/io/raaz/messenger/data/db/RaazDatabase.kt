@@ -2,23 +2,18 @@ package io.raaz.messenger.data.db
 
 import android.content.Context
 import io.raaz.messenger.util.AppLogger
-import net.sqlcipher.database.SQLiteDatabase as CipherDB
-import net.sqlcipher.database.SQLiteOpenHelper
+import net.zetetic.database.sqlcipher.SQLiteDatabase as CipherDB
+import net.zetetic.database.sqlcipher.SQLiteOpenHelper
 
-class RaazDatabase private constructor(context: Context, key: String) :
-    SQLiteOpenHelper(context, DB_NAME, null, DB_VERSION) {
+class RaazDatabase private constructor(context: Context, key: ByteArray) :
+    SQLiteOpenHelper(context, DB_NAME, key, null, DB_VERSION, 0, null, null, true) {
 
-    val db: CipherDB
-
-    init {
-        CipherDB.loadLibs(context)
-        db = getWritableDatabase(key)
-        db.execSQL("PRAGMA secure_delete = ON")
-        db.execSQL("PRAGMA foreign_keys = ON")
-        AppLogger.d(TAG, "RaazDatabase opened")
-    }
+    val db: CipherDB get() = writableDatabase
 
     override fun onCreate(db: CipherDB) {
+        db.execSQL("PRAGMA secure_delete = ON")
+        db.execSQL("PRAGMA foreign_keys = ON")
+
         db.execSQL("""
             CREATE TABLE IF NOT EXISTS contacts (
                 id TEXT PRIMARY KEY,
@@ -95,17 +90,31 @@ class RaazDatabase private constructor(context: Context, key: String) :
 
         @Volatile private var instance: RaazDatabase? = null
 
+        // key is "x'hexstring'" format from PasswordManager — extract raw bytes
         fun getInstance(context: Context, key: String): RaazDatabase =
             instance ?: synchronized(this) {
-                instance ?: RaazDatabase(context.applicationContext, key).also { instance = it }
+                instance ?: RaazDatabase(context.applicationContext, keyToBytes(key))
+                    .also { instance = it }
             }
 
         fun close() {
-            instance?.db?.close()
+            instance?.writableDatabase?.close()
             instance = null
         }
 
         fun exists(context: Context): Boolean =
             context.getDatabasePath(DB_NAME).exists()
+
+        private fun keyToBytes(key: String): ByteArray {
+            // key format: "x'<hex>'" → decode hex to raw bytes
+            return if (key.startsWith("x'") && key.endsWith("'")) {
+                val hex = key.substring(2, key.length - 1)
+                ByteArray(hex.length / 2) { i ->
+                    hex.substring(i * 2, i * 2 + 2).toInt(16).toByte()
+                }
+            } else {
+                key.toByteArray(Charsets.UTF_8)
+            }
+        }
     }
 }

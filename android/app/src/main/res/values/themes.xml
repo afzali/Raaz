@@ -20,6 +20,10 @@
     </style>
 
     <!-- Message bubble styles -->
+    <style name="MessageBubble">
+        <item name="android:padding">12dp</item>
+    </style>
+
     <style name="MessageBubble.Outgoing">
         <item name="android:background">@drawable/bg_bubble_outgoing</item>
         <item name="android:textColor">@android:color/white</item>

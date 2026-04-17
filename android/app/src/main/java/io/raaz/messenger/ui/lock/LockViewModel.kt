@@ -25,7 +25,7 @@ class LockViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) { authRepo.unlock(password) }
             _state.value = when (result) {
-                is AuthRepository.UnlockResult.Success -> LockState.Unlocked
+                is AuthRepository.UnlockResult.Success -> LockState.Unlocked(result.dbKey)
                 is AuthRepository.UnlockResult.Wiped -> LockState.Wiped
                 is AuthRepository.UnlockResult.WrongPassword -> LockState.WrongPassword(
                     result.attemptsRemaining, result.lockoutUntil
@@ -38,7 +38,7 @@ class LockViewModel(app: Application) : AndroidViewModel(app) {
     sealed class LockState {
         object Idle : LockState()
         object Loading : LockState()
-        object Unlocked : LockState()
+        data class Unlocked(val dbKey: String) : LockState()
         object Wiped : LockState()
         data class WrongPassword(val attemptsRemaining: Int, val lockoutUntil: Long?) : LockState()
         data class LockedOut(val until: Long) : LockState()

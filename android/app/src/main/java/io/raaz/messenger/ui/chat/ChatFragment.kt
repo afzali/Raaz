@@ -6,11 +6,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import io.raaz.messenger.databinding.FragmentChatBinding
+import io.raaz.messenger.ui.SharedViewModel
 import io.raaz.messenger.util.LocaleManager
 import io.raaz.messenger.util.hideKeyboard
 
@@ -18,6 +20,7 @@ class ChatFragment : Fragment() {
 
     private var _binding: FragmentChatBinding? = null
     private val binding get() = _binding!!
+    private val sharedViewModel: SharedViewModel by activityViewModels()
     private val viewModel: ChatViewModel by viewModels()
     private val args: ChatFragmentArgs by navArgs()
 
@@ -62,8 +65,10 @@ class ChatFragment : Fragment() {
             }
         }
 
-        // TODO: pass dbKey via shared ViewModel or argument
-        // viewModel.init(args.sessionId, dbKey)
+        val dbKey = sharedViewModel.getDbKey()
+        if (dbKey != null) {
+            viewModel.init(args.sessionId, dbKey)
+        }
         viewModel.syncIncoming()
     }
 

@@ -2,7 +2,7 @@ package io.raaz.messenger.data.db.dao
 
 import android.content.ContentValues
 import io.raaz.messenger.data.model.Contact
-import net.sqlcipher.database.SQLiteDatabase
+import net.zetetic.database.sqlcipher.SQLiteDatabase
 
 class ContactDao(private val db: SQLiteDatabase) {
 

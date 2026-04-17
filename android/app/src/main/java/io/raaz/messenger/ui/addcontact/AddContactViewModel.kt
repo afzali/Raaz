@@ -29,6 +29,12 @@ class AddContactViewModel(app: Application) : AndroidViewModel(app) {
     private val _myQrBitmap = MutableLiveData<Bitmap?>()
     val myQrBitmap: LiveData<Bitmap?> = _myQrBitmap
 
+    private var db: RaazDatabase? = null
+
+    fun setDb(database: RaazDatabase) {
+        db = database
+    }
+
     fun addContactFromCode(code: String, displayName: String) {
         if (code.isBlank()) {
             _state.value = State.Error("empty_code")
@@ -43,7 +49,11 @@ class AddContactViewModel(app: Application) : AndroidViewModel(app) {
                         return@withContext
                     }
                     val contact = QrCodeHelper.payloadToContact(payload, displayName)
-                    // TODO: get db instance from shared ViewModel
+                    val currentDb = db
+                    if (currentDb != null) {
+                        ContactRepository(ContactDao(currentDb.db), SessionDao(currentDb.db))
+                            .add(contact)
+                    }
                     _state.postValue(State.Success)
                 } catch (e: Exception) {
                     AppLogger.e(TAG, "Failed to add contact: ${e.message}", e)
@@ -61,8 +71,8 @@ class AddContactViewModel(app: Application) : AndroidViewModel(app) {
                     val prefs = RaazPreferences(getApplication())
                     val userId = prefs.userId ?: return@withContext
                     val deviceId = prefs.deviceId ?: return@withContext
-                    // TODO: get server URL from settings
-                    val serverUrl = "https://relay.raaz.io"
+                    val serverUrl = db?.let { SettingsDao(it.db).get().serverUrl }
+                        ?: "https://relay.raaz.io"
                     val encoded = QrCodeHelper.encodeContact(userId, deviceId, publicKey, serverUrl)
                     val bitmap = QrCodeHelper.generateQrBitmap(encoded)
                     _myQrBitmap.postValue(bitmap)

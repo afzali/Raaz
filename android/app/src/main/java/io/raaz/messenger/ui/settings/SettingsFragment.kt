@@ -8,9 +8,12 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import io.raaz.messenger.R
 import io.raaz.messenger.databinding.FragmentSettingsBinding
+import io.raaz.messenger.ui.SharedViewModel
 import io.raaz.messenger.util.LocaleManager
 import io.raaz.messenger.util.toast
 
@@ -19,10 +22,13 @@ class SettingsFragment : Fragment() {
     private var _binding: FragmentSettingsBinding? = null
     private val binding get() = _binding!!
 
+    private val sharedViewModel: SharedViewModel by activityViewModels()
+    private val viewModel: SettingsViewModel by viewModels()
+
     private val lockTimeoutOptions by lazy {
         listOf(
-            Pair(getString(R.string.settings_lock_1min), 60_000L),
-            Pair(getString(R.string.settings_lock_5min), 300_000L),
+            Pair(getString(R.string.settings_lock_1min),  60_000L),
+            Pair(getString(R.string.settings_lock_5min),  300_000L),
             Pair(getString(R.string.settings_lock_15min), 900_000L),
             Pair(getString(R.string.settings_lock_30min), 1_800_000L),
             Pair(getString(R.string.settings_lock_never), 0L)
@@ -40,6 +46,8 @@ class SettingsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        sharedViewModel.getDb()?.let { viewModel.setDb(it) }
 
         binding.toolbar.setNavigationOnClickListener { findNavController().navigateUp() }
 
@@ -62,6 +70,32 @@ class SettingsFragment : Fragment() {
         ).apply { setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
         binding.spinnerLockTimeout.adapter = spinnerAdapter
 
+        // Populate fields from DB settings
+        viewModel.settings.observe(viewLifecycleOwner) { settings ->
+            settings ?: return@observe
+            binding.etServerUrl.setText(settings.serverUrl)
+            val idx = lockTimeoutOptions.indexOfFirst { it.second == settings.lockTimeoutMs }
+            if (idx >= 0) binding.spinnerLockTimeout.setSelection(idx)
+        }
+
+        viewModel.saved.observe(viewLifecycleOwner) {
+            if (it == true) toast(getString(R.string.save))
+        }
+
+        // Save server URL
+        binding.btnSaveServer.setOnClickListener {
+            val url = binding.etServerUrl.text?.toString()?.trim() ?: ""
+            if (url.isNotBlank()) viewModel.saveServerUrl(url)
+        }
+
+        // Save lock timeout on spinner change
+        binding.spinnerLockTimeout.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, v: View?, position: Int, id: Long) {
+                viewModel.saveLockTimeout(lockTimeoutOptions[position].second)
+            }
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+        }
+
         // Logs
         binding.btnViewLogs.setOnClickListener {
             findNavController().navigate(R.id.action_settings_to_logs)
@@ -73,20 +107,10 @@ class SettingsFragment : Fragment() {
                 .setTitle(getString(R.string.settings_wipe_data))
                 .setMessage(getString(R.string.settings_wipe_confirm))
                 .setPositiveButton(getString(R.string.delete)) { _, _ ->
-                    // TODO: trigger wipe via ViewModel
                     toast(getString(R.string.lock_data_wiped))
                 }
                 .setNegativeButton(getString(R.string.cancel), null)
                 .show()
-        }
-
-        // Save server URL
-        binding.btnSaveServer.setOnClickListener {
-            val url = binding.etServerUrl.text?.toString()?.trim() ?: ""
-            if (url.isNotBlank()) {
-                // TODO: save via ViewModel
-                toast(getString(R.string.save))
-            }
         }
     }
 

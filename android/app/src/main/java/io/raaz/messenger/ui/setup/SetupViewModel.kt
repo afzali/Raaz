@@ -28,14 +28,17 @@ class SetupViewModel(app: Application) : AndroidViewModel(app) {
         _state.value = SetupState.Loading
         viewModelScope.launch {
             val result = authRepo.setup(password, url)
-            _state.value = if (result.isSuccess) SetupState.Done else SetupState.Error(result.exceptionOrNull()?.message ?: "unknown")
+            _state.value = if (result.isSuccess)
+                SetupState.Done(result.getOrThrow())
+            else
+                SetupState.Error(result.exceptionOrNull()?.message ?: "unknown")
         }
     }
 
     sealed class SetupState {
         object Idle : SetupState()
         object Loading : SetupState()
-        object Done : SetupState()
+        data class Done(val dbKey: String) : SetupState()
         data class Error(val reason: String) : SetupState()
     }
 }

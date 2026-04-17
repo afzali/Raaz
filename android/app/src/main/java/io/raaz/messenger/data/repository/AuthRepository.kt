@@ -24,7 +24,7 @@ class AuthRepository(private val context: Context) {
 
     fun isSetupComplete(): Boolean = PasswordManager.hasSalt(context) && RaazDatabase.exists(context)
 
-    suspend fun setup(password: String, serverUrl: String): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun setup(password: String, serverUrl: String): Result<String> = withContext(Dispatchers.IO) {
         try {
             val dbKey = CryptoManager.setupNewPassword(context, password)
             val raazDb = RaazDatabase.getInstance(context, dbKey)
@@ -57,7 +57,7 @@ class AuthRepository(private val context: Context) {
             authDb.recordSuccessfulUnlock()
             SessionLockManager.unlock()
             AppLogger.i(TAG, "Setup complete for user $userId")
-            Result.success(Unit)
+            Result.success(dbKey)
         } catch (e: Exception) {
             AppLogger.e(TAG, "Setup failed: ${e.message}", e)
             Result.failure(e)
@@ -90,7 +90,7 @@ class AuthRepository(private val context: Context) {
             authDb.recordSuccessfulUnlock()
             SessionLockManager.unlock()
             AppLogger.i(TAG, "Unlocked successfully")
-            UnlockResult.Success
+            UnlockResult.Success(dbKey)
         } catch (e: Exception) {
             AppLogger.w(TAG, "Wrong password attempt")
             val newState = authDb.recordFailedAttempt()
@@ -122,7 +122,7 @@ class AuthRepository(private val context: Context) {
     }
 
     sealed class UnlockResult {
-        object Success : UnlockResult()
+        data class Success(val dbKey: String) : UnlockResult()
         object Wiped : UnlockResult()
         data class WrongPassword(val attemptsRemaining: Int, val lockoutUntil: Long?) : UnlockResult()
         data class LockedOut(val until: Long) : UnlockResult()

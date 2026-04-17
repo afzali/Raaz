@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    id 'androidx.navigation.safeargs.kotlin'
 }
 
 android {
@@ -73,7 +74,7 @@ dependencies {
     implementation 'androidx.work:work-runtime-ktx:2.9.0'
 
     // SQLCipher (encrypted SQLite)
-    implementation 'net.zetetic:sqlcipher-android:4.5.6'
+    implementation 'net.zetetic:sqlcipher-android:4.10.0'
     implementation 'androidx.sqlite:sqlite:2.4.0'
 
     // Lazysodium (libsodium: X25519, XChaCha20-Poly1305, Argon2id)

@@ -2,7 +2,7 @@ package io.raaz.messenger.data.db.dao
 
 import android.content.ContentValues
 import io.raaz.messenger.data.model.Session
-import net.sqlcipher.database.SQLiteDatabase
+import net.zetetic.database.sqlcipher.SQLiteDatabase
 
 class SessionDao(private val db: SQLiteDatabase) {
 
@@ -64,6 +64,26 @@ class SessionDao(private val db: SQLiteDatabase) {
         val cursor = db.rawQuery(
             "SELECT s.id, s.contact_id, s.created_at, s.last_message_at, s.message_ttl_ms, s.sensitivity, s.notif_behavior, c.display_name, c.public_key FROM sessions s LEFT JOIN contacts c ON s.contact_id=c.id WHERE s.contact_id=? LIMIT 1",
             arrayOf(contactId)
+        )
+        return cursor.use { c ->
+            if (c.moveToFirst()) Session(
+                id = c.getString(0), contactId = c.getString(1),
+                createdAt = c.getLong(2),
+                lastMessageAt = if (c.isNull(3)) null else c.getLong(3),
+                messageTtlMs = c.getLong(4), sensitivity = c.getInt(5), notifBehavior = c.getInt(6),
+                contactName = c.getString(7) ?: "", contactPublicKey = c.getString(8) ?: ""
+            ) else null
+        }
+    }
+
+    fun getByContactDeviceId(deviceId: String): Session? {
+        val cursor = db.rawQuery(
+            """SELECT s.id, s.contact_id, s.created_at, s.last_message_at,
+               s.message_ttl_ms, s.sensitivity, s.notif_behavior, c.display_name, c.public_key
+               FROM sessions s
+               LEFT JOIN contacts c ON s.contact_id=c.id
+               WHERE c.device_id=? LIMIT 1""",
+            arrayOf(deviceId)
         )
         return cursor.use { c ->
             if (c.moveToFirst()) Session(

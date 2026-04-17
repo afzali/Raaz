@@ -4,7 +4,7 @@ data class Session(
     val id: String,
     val contactId: String,
     val createdAt: Long,
-    val lastMessageAt: Long?,
+    val lastMessageAt: Long? = null,
     val messageTtlMs: Long = 86_400_000L,
     val sensitivity: Int = 0,
     val notifBehavior: Int = 0,

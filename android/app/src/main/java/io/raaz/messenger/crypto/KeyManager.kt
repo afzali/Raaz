@@ -2,6 +2,8 @@ package io.raaz.messenger.crypto
 
 import com.goterl.lazysodium.LazySodiumAndroid
 import com.goterl.lazysodium.SodiumAndroid
+import com.goterl.lazysodium.interfaces.Box
+import com.goterl.lazysodium.interfaces.DiffieHellman
 import io.raaz.messenger.util.AppLogger
 import java.util.Base64
 import java.util.UUID
@@ -20,16 +22,16 @@ object KeyManager {
     }
 
     fun generateIdentityKeyPair(): KeyPair {
-        val pubKey = ByteArray(sodium.cryptoBoxPublicKeyBytes())
-        val prvKey = ByteArray(sodium.cryptoBoxSecretKeyBytes())
+        val pubKey = ByteArray(Box.PUBLICKEYBYTES)
+        val prvKey = ByteArray(Box.SECRETKEYBYTES)
         sodium.cryptoBoxKeypair(pubKey, prvKey)
         AppLogger.i(TAG, "Identity X25519 keypair generated")
         return KeyPair(pubKey, prvKey)
     }
 
     fun generateEphemeralKeyPair(): KeyPair {
-        val pubKey = ByteArray(sodium.cryptoBoxPublicKeyBytes())
-        val prvKey = ByteArray(sodium.cryptoBoxSecretKeyBytes())
+        val pubKey = ByteArray(Box.PUBLICKEYBYTES)
+        val prvKey = ByteArray(Box.SECRETKEYBYTES)
         sodium.cryptoBoxKeypair(pubKey, prvKey)
         return KeyPair(pubKey, prvKey)
     }
@@ -42,8 +44,8 @@ object KeyManager {
     fun publicKeyFromB64(b64: String): ByteArray = Base64.getDecoder().decode(b64)
 
     fun x25519SharedSecret(myPrivateKey: ByteArray, theirPublicKey: ByteArray): ByteArray {
-        val shared = ByteArray(sodium.cryptoScalarmultBytes())
-        val result = sodium.cryptoScalarmult(shared, myPrivateKey, theirPublicKey)
+        val shared = ByteArray(DiffieHellman.SCALARMULT_BYTES)
+        val result = sodium.cryptoScalarMult(shared, myPrivateKey, theirPublicKey)
         if (!result) throw IllegalStateException("X25519 ECDH failed")
         return shared
     }

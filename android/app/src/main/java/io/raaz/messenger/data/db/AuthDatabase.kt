@@ -2,25 +2,18 @@ package io.raaz.messenger.data.db
 
 import android.content.ContentValues
 import android.content.Context
-import android.database.Cursor
-import android.database.sqlite.SQLiteDatabase
 import io.raaz.messenger.util.AppLogger
-import net.sqlcipher.database.SQLiteOpenHelper
-import net.sqlcipher.database.SQLiteDatabase as CipherDB
+import net.zetetic.database.sqlcipher.SQLiteDatabase as CipherDB
+import net.zetetic.database.sqlcipher.SQLiteOpenHelper
 
-class AuthDatabase private constructor(context: Context, key: String) :
-    SQLiteOpenHelper(context, DB_NAME, null, DB_VERSION) {
+class AuthDatabase private constructor(context: Context, key: ByteArray) :
+    SQLiteOpenHelper(context, DB_NAME, key, null, DB_VERSION, 0, null, null, true) {
 
-    private val db: CipherDB
-
-    init {
-        CipherDB.loadLibs(context)
-        db = getWritableDatabase(key)
-        db.execSQL("PRAGMA secure_delete = ON")
-        AppLogger.d(TAG, "AuthDatabase opened")
-    }
+    val db: CipherDB get() = writableDatabase
 
     override fun onCreate(db: CipherDB) {
+        db.execSQL("PRAGMA secure_delete = ON")
+
         db.execSQL("""
             CREATE TABLE IF NOT EXISTS lock_state (
                 id INTEGER PRIMARY KEY DEFAULT 1,
@@ -54,8 +47,6 @@ class AuthDatabase private constructor(context: Context, key: String) :
         """.trimIndent())
 
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_logs_ts ON app_logs(timestamp)")
-
-        // Insert default lock state row
         db.execSQL("INSERT OR IGNORE INTO lock_state (id) VALUES (1)")
         AppLogger.d(TAG, "AuthDatabase schema created")
     }
@@ -74,16 +65,14 @@ class AuthDatabase private constructor(context: Context, key: String) :
     )
 
     fun getLockState(): LockState {
-        val c: Cursor = db.rawQuery("SELECT is_locked, locked_at, lockout_until, fail_streak FROM lock_state WHERE id=1", null)
+        val c = db.rawQuery("SELECT is_locked, locked_at, lockout_until, fail_streak FROM lock_state WHERE id=1", null)
         return c.use {
-            if (it.moveToFirst()) {
-                LockState(
-                    isLocked = it.getInt(0) == 1,
-                    lockedAt = if (it.isNull(1)) null else it.getLong(1),
-                    lockoutUntil = if (it.isNull(2)) null else it.getLong(2),
-                    failStreak = it.getInt(3)
-                )
-            } else LockState(true, null, null, 0)
+            if (it.moveToFirst()) LockState(
+                isLocked = it.getInt(0) == 1,
+                lockedAt = if (it.isNull(1)) null else it.getLong(1),
+                lockoutUntil = if (it.isNull(2)) null else it.getLong(2),
+                failStreak = it.getInt(3)
+            ) else LockState(true, null, null, 0)
         }
     }
 
@@ -91,19 +80,13 @@ class AuthDatabase private constructor(context: Context, key: String) :
         val now = System.currentTimeMillis()
         val current = getLockState()
         val newStreak = current.failStreak + 1
-
-        // Brute-force policy: streak 3-8 → 30 min lockout; streak 9+ → wipe signal
-        val lockoutUntil: Long? = when {
-            newStreak >= 3 && newStreak < 9 -> now + 30 * 60 * 1000L
-            else -> null
-        }
+        val lockoutUntil: Long? = if (newStreak in 3..8) now + 30 * 60 * 1000L else null
 
         val cv = ContentValues().apply {
             put("is_locked", 1)
             put("locked_at", now)
             put("fail_streak", newStreak)
-            if (lockoutUntil != null) put("lockout_until", lockoutUntil)
-            else putNull("lockout_until")
+            if (lockoutUntil != null) put("lockout_until", lockoutUntil) else putNull("lockout_until")
         }
         db.update("lock_state", cv, "id=1", null)
         insertAttemptRecord(now, success = false, streak = newStreak)
@@ -130,7 +113,6 @@ class AuthDatabase private constructor(context: Context, key: String) :
     }
 
     private fun insertAttemptRecord(at: Long, success: Boolean, streak: Int) {
-        // Store obfuscated attempt hash — not plaintext count
         val hash = "attempt_${streak}_${at}".hashCode().toString()
         val cv = ContentValues().apply {
             put("attempted_at", at)
@@ -139,8 +121,6 @@ class AuthDatabase private constructor(context: Context, key: String) :
         }
         db.insert("login_attempts", null, cv)
     }
-
-    // --- Logs ---
 
     fun insertLog(entry: AppLogger.LogEntry) {
         try {
@@ -152,27 +132,18 @@ class AuthDatabase private constructor(context: Context, key: String) :
                 entry.stackTrace?.let { put("stack_trace", it) }
             }
             db.insert("app_logs", null, cv)
-            // Trim to 2000 entries max
             db.execSQL("DELETE FROM app_logs WHERE id NOT IN (SELECT id FROM app_logs ORDER BY timestamp DESC LIMIT 2000)")
-        } catch (e: Exception) {
-            // Silently ignore log write failures
-        }
+        } catch (_: Exception) { }
     }
 
     fun getLogs(level: String? = null, query: String? = null, limit: Int = 500): List<AppLogger.LogEntry> {
         val conditions = mutableListOf<String>()
         val args = mutableListOf<String>()
-
-        if (level != null && level != "ALL") {
-            conditions.add("level = ?")
-            args.add(level)
-        }
+        if (level != null && level != "ALL") { conditions.add("level = ?"); args.add(level) }
         if (!query.isNullOrBlank()) {
             conditions.add("(message LIKE ? OR tag LIKE ?)")
-            args.add("%$query%")
-            args.add("%$query%")
+            args.add("%$query%"); args.add("%$query%")
         }
-
         val where = if (conditions.isEmpty()) "" else "WHERE ${conditions.joinToString(" AND ")}"
         val sql = "SELECT id, timestamp, level, tag, message, stack_trace FROM app_logs $where ORDER BY timestamp DESC LIMIT $limit"
         val c = db.rawQuery(sql, args.toTypedArray())
@@ -180,10 +151,8 @@ class AuthDatabase private constructor(context: Context, key: String) :
             val list = mutableListOf<AppLogger.LogEntry>()
             while (it.moveToNext()) {
                 list.add(AppLogger.LogEntry(
-                    id = it.getLong(0),
-                    timestamp = it.getLong(1),
-                    level = it.getString(2),
-                    tag = it.getString(3),
+                    id = it.getLong(0), timestamp = it.getLong(1),
+                    level = it.getString(2), tag = it.getString(3),
                     message = it.getString(4),
                     stackTrace = if (it.isNull(5)) null else it.getString(5)
                 ))
@@ -192,9 +161,7 @@ class AuthDatabase private constructor(context: Context, key: String) :
         }
     }
 
-    fun clearLogs() {
-        db.execSQL("DELETE FROM app_logs")
-    }
+    fun clearLogs() { db.execSQL("DELETE FROM app_logs") }
 
     fun shouldWipe(): Boolean = getLockState().failStreak >= 9
 
@@ -207,7 +174,14 @@ class AuthDatabase private constructor(context: Context, key: String) :
 
         fun getInstance(context: Context, key: String): AuthDatabase =
             instance ?: synchronized(this) {
-                instance ?: AuthDatabase(context.applicationContext, key).also { instance = it }
+                instance ?: AuthDatabase(context.applicationContext, keyToBytes(key))
+                    .also { instance = it }
             }
+
+        private fun keyToBytes(key: String): ByteArray =
+            if (key.startsWith("x'") && key.endsWith("'")) {
+                val hex = key.substring(2, key.length - 1)
+                ByteArray(hex.length / 2) { i -> hex.substring(i * 2, i * 2 + 2).toInt(16).toByte() }
+            } else key.toByteArray(Charsets.UTF_8)
     }
 }

@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="24dp"
-        android:minHeight="@{android.R.attr.windowMinWidthMinor}">
+        android:minHeight="0dp">
 
         <ImageView
             android:id="@+id/iv_logo"

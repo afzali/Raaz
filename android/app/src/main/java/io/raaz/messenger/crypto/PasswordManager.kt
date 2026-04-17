@@ -3,7 +3,8 @@ package io.raaz.messenger.crypto
 import android.content.Context
 import com.goterl.lazysodium.LazySodiumAndroid
 import com.goterl.lazysodium.SodiumAndroid
-import com.goterl.lazysodium.utils.Key
+import com.goterl.lazysodium.interfaces.PwHash
+import com.sun.jna.NativeLong
 import io.raaz.messenger.util.AppLogger
 import java.security.SecureRandom
 import java.util.Base64
@@ -25,7 +26,7 @@ object PasswordManager {
     private const val KEY_SALT = "argon2_salt"
 
     fun generateSalt(): ByteArray {
-        val salt = ByteArray(sodium.cryptoPwHashSaltBytes())
+        val salt = ByteArray(PwHash.SALTBYTES)
         random.nextBytes(salt)
         return salt
     }
@@ -51,13 +52,13 @@ object PasswordManager {
     fun deriveKey(password: String, salt: ByteArray): String {
         AppLogger.d(TAG, "Deriving key with Argon2id (this may take a moment…)")
         val keyBytes = ByteArray(KEY_LEN)
+        val pwBytes = password.toByteArray(Charsets.UTF_8)
         val result = sodium.cryptoPwHash(
             keyBytes, KEY_LEN,
-            password.toCharArray(),
-            password.length.toLong(),
+            pwBytes, pwBytes.size,
             salt,
-            OPS_LIMIT, MEM_LIMIT,
-            com.goterl.lazysodium.interfaces.PwHash.Alg.PWHASH_ALG_ARGON2ID13
+            OPS_LIMIT, NativeLong(MEM_LIMIT),
+            PwHash.Alg.PWHASH_ALG_ARGON2ID13
         )
         if (!result) throw IllegalStateException("Argon2id key derivation failed")
         // SQLCipher accepts "x'<hex>'" format for raw key

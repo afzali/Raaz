@@ -6,9 +6,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import io.raaz.messenger.databinding.FragmentAddContactBinding
+import io.raaz.messenger.ui.SharedViewModel
 import io.raaz.messenger.util.LocaleManager
 import io.raaz.messenger.util.hide
 import io.raaz.messenger.util.show
@@ -18,6 +20,7 @@ class AddContactFragment : Fragment() {
 
     private var _binding: FragmentAddContactBinding? = null
     private val binding get() = _binding!!
+    private val sharedViewModel: SharedViewModel by activityViewModels()
     private val viewModel: AddContactViewModel by viewModels()
 
     override fun onAttach(context: Context) {
@@ -32,13 +35,13 @@ class AddContactFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        sharedViewModel.getDb()?.let { viewModel.setDb(it) }
+
         binding.toolbar.setNavigationOnClickListener { findNavController().navigateUp() }
 
-        // Setup tabs
         binding.tabLayout.addTab(binding.tabLayout.newTab().setText(getString(io.raaz.messenger.R.string.add_contact_enter_code)))
         binding.tabLayout.addTab(binding.tabLayout.newTab().setText(getString(io.raaz.messenger.R.string.add_contact_show_my_qr)))
 
-        // Load my QR code
         viewModel.myQrBitmap.observe(viewLifecycleOwner) { bitmap ->
             if (bitmap != null) binding.ivMyQr.setImageBitmap(bitmap)
         }

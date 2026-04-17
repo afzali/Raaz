@@ -6,10 +6,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import io.raaz.messenger.R
 import io.raaz.messenger.databinding.FragmentSetupBinding
+import io.raaz.messenger.ui.SharedViewModel
 import io.raaz.messenger.util.LocaleManager
 import io.raaz.messenger.util.hide
 import io.raaz.messenger.util.show
@@ -18,6 +20,7 @@ class SetupFragment : Fragment() {
 
     private var _binding: FragmentSetupBinding? = null
     private val binding get() = _binding!!
+    private val sharedViewModel: SharedViewModel by activityViewModels()
     private val viewModel: SetupViewModel by viewModels()
 
     override fun onAttach(context: Context) {
@@ -59,6 +62,7 @@ class SetupFragment : Fragment() {
                     binding.btnSetup.text = getString(R.string.setup_generating_keys)
                 }
                 is SetupViewModel.SetupState.Done -> {
+                    sharedViewModel.setDbKey(state.dbKey)
                     findNavController().navigate(R.id.action_setup_to_chats)
                 }
                 is SetupViewModel.SetupState.Error -> {

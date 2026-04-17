@@ -37,9 +37,34 @@ class SetupFragment : Fragment() {
 
         binding.etServerUrl.setText(getString(R.string.setup_server_url_hint))
 
-        binding.rgLanguage.setOnCheckedChangeListener { _, checkedId ->
-            val lang = if (checkedId == R.id.rb_lang_fa) LocaleManager.LANG_FA else LocaleManager.LANG_EN
-            LocaleManager.setLanguage(requireContext(), lang)
+        binding.btnTestConnection.setOnClickListener {
+            val url = binding.etServerUrl.text?.toString() ?: ""
+            viewModel.testConnection(url)
+        }
+
+        viewModel.connectionState.observe(viewLifecycleOwner) { state ->
+            when (state) {
+                is SetupViewModel.ConnectionState.Idle -> binding.tvConnectionStatus.visibility = android.view.View.GONE
+                is SetupViewModel.ConnectionState.Testing -> {
+                    binding.tvConnectionStatus.visibility = android.view.View.VISIBLE
+                    binding.tvConnectionStatus.text = getString(R.string.setup_test_connecting)
+                    binding.tvConnectionStatus.setTextColor(
+                        com.google.android.material.color.MaterialColors.getColor(
+                            binding.tvConnectionStatus, com.google.android.material.R.attr.colorOnSurfaceVariant
+                        )
+                    )
+                }
+                is SetupViewModel.ConnectionState.Ok -> {
+                    binding.tvConnectionStatus.visibility = android.view.View.VISIBLE
+                    binding.tvConnectionStatus.text = getString(R.string.setup_test_ok)
+                    binding.tvConnectionStatus.setTextColor(requireContext().getColor(android.R.color.holo_green_dark))
+                }
+                is SetupViewModel.ConnectionState.Fail -> {
+                    binding.tvConnectionStatus.visibility = android.view.View.VISIBLE
+                    binding.tvConnectionStatus.text = getString(R.string.setup_test_fail)
+                    binding.tvConnectionStatus.setTextColor(requireContext().getColor(android.R.color.holo_red_dark))
+                }
+            }
         }
 
         binding.btnSetup.setOnClickListener {

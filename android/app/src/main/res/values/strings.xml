@@ -112,4 +112,17 @@
     <string name="error_unknown">Something went wrong</string>
     <string name="error_decryption">Failed to decrypt message</string>
     <string name="permission_camera_required">Camera permission required to scan QR code</string>
+
+    <!-- Welcome / language picker -->
+    <string name="welcome_title">Raaz</string>
+    <string name="welcome_subtitle">Secure end-to-end encrypted messenger</string>
+    <string name="welcome_choose_language">Choose your language</string>
+    <string name="welcome_continue">Continue</string>
+
+    <!-- Server test -->
+    <string name="setup_test_connection">Test Connection</string>
+    <string name="setup_test_connecting">Checking…</string>
+    <string name="setup_test_ok">Server reachable ✓</string>
+    <string name="setup_test_fail">Cannot reach server ✗</string>
 </resources>
+<!-- will be replaced properly -->

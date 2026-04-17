@@ -6,10 +6,33 @@
     app:startDestination="@id/lockFragment">
 
     <fragment
+        android:id="@+id/welcomeFragment"
+        android:name="io.raaz.messenger.ui.welcome.WelcomeFragment"
+        android:label="@string/welcome_title"
+        tools:layout="@layout/fragment_welcome">
+        <action
+            android:id="@+id/action_welcome_to_setup"
+            app:destination="@id/setupFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right"
+            app:popUpTo="@id/welcomeFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <fragment
         android:id="@+id/lockFragment"
         android:name="io.raaz.messenger.ui.lock.LockFragment"
         android:label="@string/lock_title"
         tools:layout="@layout/fragment_lock">
+        <action
+            android:id="@+id/action_lock_to_welcome"
+            app:destination="@id/welcomeFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popUpTo="@id/lockFragment"
+            app:popUpToInclusive="true" />
         <action
             android:id="@+id/action_lock_to_setup"
             app:destination="@id/setupFragment"

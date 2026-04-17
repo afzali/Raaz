@@ -37,7 +37,7 @@ class LockFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         if (!viewModel.isSetupComplete) {
-            findNavController().navigate(R.id.action_lock_to_setup)
+            findNavController().navigate(R.id.action_lock_to_welcome)
             return
         }
 
@@ -98,7 +98,7 @@ class LockFragment : Fragment() {
                 binding.tvError.text = getString(R.string.lock_data_wiped)
                 binding.tvError.show()
                 binding.btnUnlock.isEnabled = false
-                findNavController().navigate(R.id.action_lock_to_setup)
+                findNavController().navigate(R.id.action_lock_to_welcome)
             }
         }
     }

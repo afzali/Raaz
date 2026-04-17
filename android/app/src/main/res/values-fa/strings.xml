@@ -112,4 +112,16 @@
     <string name="error_unknown">مشکلی پیش آمد</string>
     <string name="error_decryption">رمزگشایی پیام ناموفق بود</string>
     <string name="permission_camera_required">برای اسکن کد QR نیاز به دسترسی دوربین دارید</string>
+
+    <!-- Welcome / language picker -->
+    <string name="welcome_title">راز</string>
+    <string name="welcome_subtitle">پیام‌رسان امن با رمزنگاری سرتاسری</string>
+    <string name="welcome_choose_language">زبان خود را انتخاب کنید</string>
+    <string name="welcome_continue">ادامه</string>
+
+    <!-- Server test -->
+    <string name="setup_test_connection">تست اتصال</string>
+    <string name="setup_test_connecting">در حال بررسی…</string>
+    <string name="setup_test_ok">سرور در دسترس است ✓</string>
+    <string name="setup_test_fail">سرور در دسترس نیست ✗</string>
 </resources>

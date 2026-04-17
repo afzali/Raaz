@@ -29,6 +29,9 @@ class AddContactViewModel(app: Application) : AndroidViewModel(app) {
     private val _myQrBitmap = MutableLiveData<Bitmap?>()
     val myQrBitmap: LiveData<Bitmap?> = _myQrBitmap
 
+    private val _myInviteCode = MutableLiveData<String?>()
+    val myInviteCode: LiveData<String?> = _myInviteCode
+
     private var db: RaazDatabase? = null
 
     fun setDb(database: RaazDatabase) {
@@ -67,15 +70,28 @@ class AddContactViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 try {
-                    val publicKey = CryptoManager.getPublicKeyB64() ?: return@withContext
                     val prefs = RaazPreferences(getApplication())
                     val userId = prefs.userId ?: return@withContext
                     val deviceId = prefs.deviceId ?: return@withContext
-                    val serverUrl = db?.let { SettingsDao(it.db).get().serverUrl }
-                        ?: "https://relay.raaz.io"
+                    val currentDb = db ?: return@withContext
+                    val settings = SettingsDao(currentDb.db).get()
+                    val serverUrl = settings.serverUrl
+
+                    // Load keys from DB if not in memory
+                    var publicKey = CryptoManager.getPublicKeyB64()
+                    if (publicKey == null && settings.privateKeyEncrypted != null && settings.publicKey != null) {
+                        CryptoManager.loadKeys(settings.privateKeyEncrypted, settings.publicKey)
+                        publicKey = CryptoManager.getPublicKeyB64()
+                    }
+                    if (publicKey == null) {
+                        AppLogger.e(TAG, "No public key available")
+                        return@withContext
+                    }
+
                     val encoded = QrCodeHelper.encodeContact(userId, deviceId, publicKey, serverUrl)
                     val bitmap = QrCodeHelper.generateQrBitmap(encoded)
                     _myQrBitmap.postValue(bitmap)
+                    _myInviteCode.postValue(encoded)
                 } catch (e: Exception) {
                     AppLogger.e(TAG, "Failed to generate QR: ${e.message}", e)
                 }

@@ -38,16 +38,18 @@ class AuthRepository(private val context: Context) {
 
             CryptoManager.loadKeys(privateKeyB64, publicKeyB64)
 
-            // Register with server
+            // Always persist userId/deviceId — server registration may fail/retry later
             val prefs = RaazPreferences(context)
+            prefs.userId = userId
+            prefs.deviceId = deviceId
+
+            // Register with server
             try {
                 val api = RaazApiService.get(serverUrl)
                 val resp = api.registerDevice(RegisterDeviceRequest(userId, deviceId, publicKeyB64))
                 if (resp.isSuccessful) {
                     val body = resp.body()!!
                     prefs.bearerToken = body.token
-                    prefs.userId = userId
-                    prefs.deviceId = deviceId
                     AppLogger.i(TAG, "Device registered with server")
                 }
             } catch (e: Exception) {

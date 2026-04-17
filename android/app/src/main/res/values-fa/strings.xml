@@ -21,7 +21,7 @@
     <string name="setup_passwords_dont_match">رمزها یکسان نیستند</string>
     <string name="setup_password_too_short">رمز باید حداقل ۶ کاراکتر باشد</string>
     <string name="setup_server_url">آدرس سرور</string>
-    <string name="setup_server_url_hint">https://relay.raaz.io</string>
+    <string name="setup_server_url_hint">http://relay.rahejanan.ir</string>
     <string name="setup_generating_keys">در حال ساخت کلیدهای رمزنگاری…</string>
     <string name="setup_complete">راه‌اندازی کامل شد</string>
     <string name="setup_language">زبان</string>
@@ -51,6 +51,7 @@
     <string name="add_contact_add">افزودن</string>
     <string name="add_contact_invalid_code">کد دعوت نامعتبر است</string>
     <string name="add_contact_added">مخاطب اضافه شد</string>
+    <string name="add_contact_my_invite_code">کد دعوت من</string>
     <string name="add_contact_name_hint">نام نمایشی</string>
 
     <!-- Settings -->
@@ -124,4 +125,7 @@
     <string name="setup_test_connecting">در حال بررسی…</string>
     <string name="setup_test_ok">سرور در دسترس است ✓</string>
     <string name="setup_test_fail">سرور در دسترس نیست ✗</string>
+
+    <!-- Notification permission -->
+    <string name="notif_permission_denied">دسترسی اعلان رد شد</string>
 </resources>

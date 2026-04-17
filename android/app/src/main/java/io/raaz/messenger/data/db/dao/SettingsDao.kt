@@ -44,15 +44,18 @@ class SettingsDao(private val db: SQLiteDatabase) {
     }
 
     fun updateLanguage(lang: String) {
-        db.execSQL("UPDATE app_settings SET language=? WHERE id=1", arrayOf(lang))
+        val cv = ContentValues().apply { put("language", lang) }
+        db.update("app_settings", cv, "id=1", null)
     }
 
     fun updateLockTimeout(ms: Long) {
-        db.execSQL("UPDATE app_settings SET lock_timeout_ms=? WHERE id=1", arrayOf(ms))
+        val cv = ContentValues().apply { put("lock_timeout_ms", ms) }
+        db.update("app_settings", cv, "id=1", null)
     }
 
     fun updateServerUrl(url: String) {
-        db.execSQL("UPDATE app_settings SET server_url=? WHERE id=1", arrayOf(url))
+        val cv = ContentValues().apply { put("server_url", url) }
+        db.update("app_settings", cv, "id=1", null)
     }
 
     fun markSetupComplete(userId: String, deviceId: String, publicKey: String, privateKeyEnc: String) {

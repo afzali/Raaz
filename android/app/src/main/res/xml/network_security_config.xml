@@ -7,6 +7,9 @@
             <certificates src="user" />
         </trust-anchors>
     </debug-overrides>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">relay.rahejanan.ir</domain>
+    </domain-config>
     <base-config cleartextTrafficPermitted="false">
         <trust-anchors>
             <certificates src="system" />

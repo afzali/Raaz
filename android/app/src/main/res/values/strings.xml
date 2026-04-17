@@ -21,7 +21,7 @@
     <string name="setup_passwords_dont_match">Passwords do not match</string>
     <string name="setup_password_too_short">Password must be at least 6 characters</string>
     <string name="setup_server_url">Server URL</string>
-    <string name="setup_server_url_hint">https://relay.raaz.io</string>
+    <string name="setup_server_url_hint">http://relay.rahejanan.ir</string>
     <string name="setup_generating_keys">Generating encryption keys…</string>
     <string name="setup_complete">Setup complete</string>
     <string name="setup_language">Language</string>
@@ -51,6 +51,7 @@
     <string name="add_contact_add">Add</string>
     <string name="add_contact_invalid_code">Invalid invite code</string>
     <string name="add_contact_added">Contact added</string>
+    <string name="add_contact_my_invite_code">My invite code</string>
     <string name="add_contact_name_hint">Display name</string>
 
     <!-- Settings -->
@@ -124,5 +125,8 @@
     <string name="setup_test_connecting">Checking…</string>
     <string name="setup_test_ok">Server reachable ✓</string>
     <string name="setup_test_fail">Cannot reach server ✗</string>
+
+    <!-- Notification permission -->
+    <string name="notif_permission_denied">Notification permission denied</string>
 </resources>
 <!-- will be replaced properly -->

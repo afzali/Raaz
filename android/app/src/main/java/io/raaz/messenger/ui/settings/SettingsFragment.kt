@@ -1,12 +1,20 @@
 package io.raaz.messenger.ui.settings
 
+import android.Manifest
 import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -24,6 +32,15 @@ class SettingsFragment : Fragment() {
 
     private val sharedViewModel: SharedViewModel by activityViewModels()
     private val viewModel: SettingsViewModel by viewModels()
+
+    private val notifPermission = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        updateNotifSwitch()
+        if (!granted) {
+            toast(getString(R.string.notif_permission_denied))
+        }
+    }
 
     private val lockTimeoutOptions by lazy {
         listOf(
@@ -50,6 +67,20 @@ class SettingsFragment : Fragment() {
         sharedViewModel.getDb()?.let { viewModel.setDb(it) }
 
         binding.toolbar.setNavigationOnClickListener { findNavController().navigateUp() }
+
+        // Notification switch
+        updateNotifSwitch()
+        binding.switchNotifications.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                requestNotificationPermission()
+            } else {
+                // Can't revoke programmatically — open system settings
+                startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.fromParts("package", requireContext().packageName, null)
+                })
+                binding.switchNotifications.isChecked = hasNotificationPermission()
+            }
+        }
 
         // Language
         val lang = LocaleManager.getLanguage(requireContext())
@@ -111,6 +142,36 @@ class SettingsFragment : Fragment() {
                 }
                 .setNegativeButton(getString(R.string.cancel), null)
                 .show()
+        }
+    }
+
+    private fun hasNotificationPermission(): Boolean =
+        androidx.core.app.NotificationManagerCompat.from(requireContext()).areNotificationsEnabled()
+
+    private fun updateNotifSwitch() {
+        binding.switchNotifications.isChecked = hasNotificationPermission()
+    }
+
+    private fun requestNotificationPermission() {
+        if (hasNotificationPermission()) {
+            updateNotifSwitch()
+            return
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            AlertDialog.Builder(requireContext())
+                .setTitle(getString(R.string.settings_notifications))
+                .setMessage(getString(R.string.settings_notifications_desc))
+                .setPositiveButton(getString(R.string.ok)) { _, _ ->
+                    notifPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+                .setNegativeButton(getString(R.string.cancel)) { _, _ ->
+                    updateNotifSwitch()
+                }
+                .show()
+        } else {
+            startActivity(Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, requireContext().packageName)
+            })
         }
     }
 

@@ -1,5 +1,6 @@
 package io.raaz.messenger.data.db
 
+import android.content.ContentValues
 import android.content.Context
 import io.raaz.messenger.util.AppLogger
 import net.zetetic.database.sqlcipher.SQLiteDatabase as CipherDB
@@ -10,9 +11,15 @@ class RaazDatabase private constructor(context: Context, key: ByteArray) :
 
     val db: CipherDB get() = writableDatabase
 
+    override fun onConfigure(db: CipherDB) {
+        db.setForeignKeyConstraintsEnabled(true)
+    }
+
+    override fun onOpen(db: CipherDB) {
+        db.rawQuery("PRAGMA secure_delete = ON", null)?.close()
+    }
+
     override fun onCreate(db: CipherDB) {
-        db.execSQL("PRAGMA secure_delete = ON")
-        db.execSQL("PRAGMA foreign_keys = ON")
 
         db.execSQL("""
             CREATE TABLE IF NOT EXISTS contacts (
@@ -75,7 +82,8 @@ class RaazDatabase private constructor(context: Context, key: ByteArray) :
             )
         """.trimIndent())
 
-        db.execSQL("INSERT OR IGNORE INTO app_settings (id) VALUES (1)")
+        val cv = ContentValues().apply { put("id", 1) }
+        db.insertWithOnConflict("app_settings", null, cv, CipherDB.CONFLICT_IGNORE)
         AppLogger.d(TAG, "RaazDatabase schema created")
     }
 

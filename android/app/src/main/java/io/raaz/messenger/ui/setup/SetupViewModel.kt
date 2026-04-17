@@ -28,7 +28,7 @@ class SetupViewModel(app: Application) : AndroidViewModel(app) {
             _state.value = SetupState.Error("password_mismatch")
             return
         }
-        val url = serverUrl.ifBlank { "https://relay.raaz.io" }
+        val url = serverUrl.ifBlank { "http://relay.rahejanan.ir" }
         _state.value = SetupState.Loading
         viewModelScope.launch {
             val result = authRepo.setup(password, url)
@@ -43,7 +43,7 @@ class SetupViewModel(app: Application) : AndroidViewModel(app) {
     val connectionState: LiveData<ConnectionState> = _connectionState
 
     fun testConnection(url: String) {
-        val baseUrl = url.ifBlank { "https://relay.raaz.io" }.trimEnd('/')
+        val baseUrl = url.ifBlank { "http://relay.rahejanan.ir" }.trimEnd('/')
         _connectionState.value = ConnectionState.Testing
         viewModelScope.launch {
             val ok = withContext(Dispatchers.IO) {

@@ -41,4 +41,7 @@
     <!-- Divider / outline -->
     <color name="divider_light">#E0E8E4</color>
     <color name="divider_dark">#1F2E29</color>
+
+    <!-- Icon stroke — used by feather icons -->
+    <color name="icon_stroke">#1A6B5A</color>
 </resources>

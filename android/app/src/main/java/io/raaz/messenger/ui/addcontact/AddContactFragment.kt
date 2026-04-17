@@ -1,6 +1,9 @@
 package io.raaz.messenger.ui.addcontact
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -46,16 +49,48 @@ class AddContactFragment : Fragment() {
             if (bitmap != null) binding.ivMyQr.setImageBitmap(bitmap)
         }
 
+
         binding.tabLayout.addOnTabSelectedListener(object : com.google.android.material.tabs.TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: com.google.android.material.tabs.TabLayout.Tab) {
                 when (tab.position) {
-                    0 -> { binding.tilCode.show(); binding.ivMyQr.hide(); binding.cameraPreview.hide() }
-                    1 -> { binding.tilCode.hide(); binding.ivMyQr.show(); binding.cameraPreview.hide(); viewModel.loadMyQr() }
+                    0 -> {
+                        binding.tilCode.show()
+                        binding.tilName.show()
+                        binding.btnAdd.show()
+                        binding.layoutMyQr.hide()
+                        binding.cameraPreview.hide()
+                    }
+                    1 -> {
+                        binding.tilCode.hide()
+                        binding.tilName.hide()
+                        binding.btnAdd.hide()
+                        binding.layoutMyQr.show()
+                        binding.cameraPreview.hide()
+                        viewModel.loadMyQr()
+                    }
                 }
             }
             override fun onTabUnselected(tab: com.google.android.material.tabs.TabLayout.Tab) {}
             override fun onTabReselected(tab: com.google.android.material.tabs.TabLayout.Tab) {}
         })
+
+        viewModel.myInviteCode.observe(viewLifecycleOwner) { code ->
+            if (code != null) {
+                binding.tvInviteCode.text = code
+                binding.btnCopyCode.setOnClickListener {
+                    val cm = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    cm.setPrimaryClip(ClipData.newPlainText("invite_code", code))
+                    toast(getString(io.raaz.messenger.R.string.copy))
+                }
+                binding.btnShareCode.setOnClickListener {
+                    val intent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_TEXT, code)
+                    }
+                    startActivity(Intent.createChooser(intent, null))
+                }
+            }
+        }
 
         binding.btnAdd.setOnClickListener {
             val code = binding.etCode.text?.toString()?.trim() ?: ""

@@ -11,8 +11,11 @@ class AuthDatabase private constructor(context: Context, key: ByteArray) :
 
     val db: CipherDB get() = writableDatabase
 
+    override fun onOpen(db: CipherDB) {
+        db.rawQuery("PRAGMA secure_delete = ON", null)?.close()
+    }
+
     override fun onCreate(db: CipherDB) {
-        db.execSQL("PRAGMA secure_delete = ON")
 
         db.execSQL("""
             CREATE TABLE IF NOT EXISTS lock_state (
@@ -47,7 +50,8 @@ class AuthDatabase private constructor(context: Context, key: ByteArray) :
         """.trimIndent())
 
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_logs_ts ON app_logs(timestamp)")
-        db.execSQL("INSERT OR IGNORE INTO lock_state (id) VALUES (1)")
+        val cv = ContentValues().apply { put("id", 1) }
+        db.insertWithOnConflict("lock_state", null, cv, CipherDB.CONFLICT_IGNORE)
         AppLogger.d(TAG, "AuthDatabase schema created")
     }
 
@@ -132,7 +136,7 @@ class AuthDatabase private constructor(context: Context, key: ByteArray) :
                 entry.stackTrace?.let { put("stack_trace", it) }
             }
             db.insert("app_logs", null, cv)
-            db.execSQL("DELETE FROM app_logs WHERE id NOT IN (SELECT id FROM app_logs ORDER BY timestamp DESC LIMIT 2000)")
+            db.delete("app_logs", "id NOT IN (SELECT id FROM app_logs ORDER BY timestamp DESC LIMIT 2000)", null)
         } catch (_: Exception) { }
     }
 
@@ -161,7 +165,7 @@ class AuthDatabase private constructor(context: Context, key: ByteArray) :
         }
     }
 
-    fun clearLogs() { db.execSQL("DELETE FROM app_logs") }
+    fun clearLogs() { db.delete("app_logs", null, null) }
 
     fun shouldWipe(): Boolean = getLockState().failStreak >= 9
 

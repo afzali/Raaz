@@ -39,6 +39,14 @@ class Database {
 
         $db->exec("CREATE INDEX IF NOT EXISTS idx_msg_recipient ON messages(recipient_device, acked)");
         $db->exec("CREATE INDEX IF NOT EXISTS idx_msg_expires ON messages(expires_at)");
+
+        $db->exec("CREATE TABLE IF NOT EXISTS receipts (
+            message_id TEXT NOT NULL,
+            sender_device TEXT NOT NULL,
+            acked_at INTEGER NOT NULL,
+            PRIMARY KEY (message_id, sender_device)
+        )");
+        $db->exec("CREATE INDEX IF NOT EXISTS idx_receipts_sender ON receipts(sender_device)");
     }
 
     public static function cleanupExpired(PDO $db): void {

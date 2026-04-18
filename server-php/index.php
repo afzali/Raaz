@@ -34,5 +34,6 @@ $router->add('POST',   '/devices/register', fn($p) => $deviceHandler->register($
 $router->add('POST',   '/messages',          fn($p) => $messageHandler->send($p));
 $router->add('GET',    '/messages',          fn($p) => $messageHandler->pull($p));
 $router->add('DELETE', '/messages/{id}',     fn($p) => $messageHandler->ack($p));
+$router->add('GET',    '/receipts',           fn($p) => $messageHandler->receipts($p));
 
 $router->dispatch();

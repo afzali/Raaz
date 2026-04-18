@@ -6,12 +6,14 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import io.raaz.messenger.data.repository.AuthRepository
+import io.raaz.messenger.util.AppLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class LockViewModel(app: Application) : AndroidViewModel(app) {
 
+    private val TAG = AppLogger.Cat.AUTH
     private val authRepo = AuthRepository(app)
 
     private val _state = MutableLiveData<LockState>(LockState.Idle)
@@ -21,16 +23,27 @@ class LockViewModel(app: Application) : AndroidViewModel(app) {
 
     fun unlock(password: String) {
         if (password.isBlank()) return
+        AppLogger.i(TAG, "Unlock attempt initiated from LockScreen")
         _state.value = LockState.Loading
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) { authRepo.unlock(password) }
             _state.value = when (result) {
-                is AuthRepository.UnlockResult.Success -> LockState.Unlocked(result.dbKey)
-                is AuthRepository.UnlockResult.Wiped -> LockState.Wiped
-                is AuthRepository.UnlockResult.WrongPassword -> LockState.WrongPassword(
-                    result.attemptsRemaining, result.lockoutUntil
-                )
-                is AuthRepository.UnlockResult.LockedOut -> LockState.LockedOut(result.until)
+                is AuthRepository.UnlockResult.Success -> {
+                    AppLogger.i(TAG, "LockVM: unlock success — navigating to chats")
+                    LockState.Unlocked(result.dbKey)
+                }
+                is AuthRepository.UnlockResult.Wiped -> {
+                    AppLogger.w(TAG, "LockVM: data wiped — navigating to setup")
+                    LockState.Wiped
+                }
+                is AuthRepository.UnlockResult.WrongPassword -> {
+                    AppLogger.w(TAG, "LockVM: wrong password — ${result.attemptsRemaining} attempts left")
+                    LockState.WrongPassword(result.attemptsRemaining, result.lockoutUntil)
+                }
+                is AuthRepository.UnlockResult.LockedOut -> {
+                    AppLogger.w(TAG, "LockVM: locked out until ${result.until}")
+                    LockState.LockedOut(result.until)
+                }
             }
         }
     }

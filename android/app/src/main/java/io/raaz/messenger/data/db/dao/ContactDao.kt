@@ -35,6 +35,11 @@ class ContactDao(private val db: SQLiteDatabase) {
         db.delete("contacts", "id=?", arrayOf(id))
     }
 
+    fun rename(id: String, newName: String) {
+        val cv = ContentValues().apply { put("display_name", newName) }
+        db.update("contacts", cv, "id=?", arrayOf(id))
+    }
+
     fun updateLastSeen(id: String, timestamp: Long) {
         val cv = ContentValues().apply { put("last_seen", timestamp) }
         db.update("contacts", cv, "id=?", arrayOf(id))

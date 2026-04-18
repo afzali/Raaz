@@ -93,6 +93,11 @@ class SessionDao(private val db: SQLiteDatabase) {
         db.update("sessions", cv, "id=?", arrayOf(sessionId))
     }
 
+    fun rename(sessionId: String, newName: String) {
+        val cv = ContentValues().apply { put("display_name", newName) }
+        db.update("sessions", cv, "id=?", arrayOf(sessionId))
+    }
+
     fun delete(id: String) {
         db.delete("sessions", "id=?", arrayOf(id))
     }

@@ -72,7 +72,7 @@ class RaazDatabase private constructor(context: Context, key: ByteArray) :
                 lock_timeout_ms INTEGER NOT NULL DEFAULT 300000,
                 language TEXT NOT NULL DEFAULT 'fa',
                 theme INTEGER NOT NULL DEFAULT 0,
-                server_url TEXT NOT NULL DEFAULT 'https://relay.raaz.io',
+                server_url TEXT NOT NULL DEFAULT 'http://relay.rahejanan.ir',
                 notif_enabled INTEGER NOT NULL DEFAULT 1,
                 setup_complete INTEGER NOT NULL DEFAULT 0,
                 user_id TEXT,

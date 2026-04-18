@@ -21,7 +21,7 @@ import kotlinx.coroutines.withContext
 
 class AddContactViewModel(app: Application) : AndroidViewModel(app) {
 
-    private val TAG = "AddContactVM"
+    private val TAG = AppLogger.Cat.QR
 
     private val _state = MutableLiveData<State>(State.Idle)
     val state: LiveData<State> = _state
@@ -36,13 +36,14 @@ class AddContactViewModel(app: Application) : AndroidViewModel(app) {
 
     fun setDb(database: RaazDatabase) {
         db = database
-        AppLogger.d(TAG, "DB set: $database")
+        AppLogger.d(TAG, "DB set")
     }
 
     fun addContactFromCode(code: String, displayName: String) {
-        AppLogger.d(TAG, "addContactFromCode called, code length=${code.length}, db=${db != null}")
+        AppLogger.i(TAG, "addContactFromCode: code.length=${code.length}, displayName='$displayName'")
 
         if (code.isBlank()) {
+            AppLogger.w(TAG, "Empty code — rejecting")
             _state.value = State.Error("empty_code")
             return
         }
@@ -57,50 +58,22 @@ class AddContactViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 try {
-                    // Log full code in chunks (logcat truncates long lines)
-                    AppLogger.d(TAG, "Code length=${code.length}")
-                    code.chunked(200).forEachIndexed { i, chunk ->
-                        AppLogger.d(TAG, "Code[$i]: $chunk")
-                    }
-                    // Log char codes of first/last few chars to detect invisible chars
-                    val firstChars = code.take(5).map { it.code }
-                    val lastChars = code.takeLast(5).map { it.code }
-                    AppLogger.d(TAG, "First char codes: $firstChars")
-                    AppLogger.d(TAG, "Last char codes:  $lastChars")
-
-                    // Try decode manually to see exact error
-                    try {
-                        val cleaned = code.replace(Regex("\\s"), "")
-                        AppLogger.d(TAG, "Cleaned length=${cleaned.length}")
-                        val bytes = java.util.Base64.getUrlDecoder().decode(cleaned)
-                        AppLogger.d(TAG, "Base64 decoded OK, json=${String(bytes).take(100)}")
-                    } catch (decodeEx: Exception) {
-                        AppLogger.e(TAG, "Base64 decode failed: ${decodeEx.message}")
-                        // Try standard decoder
-                        try {
-                            val cleaned = code.replace(Regex("\\s"), "")
-                            val bytes = java.util.Base64.getDecoder().decode(cleaned)
-                            AppLogger.d(TAG, "Standard B64 decoded OK, json=${String(bytes).take(100)}")
-                        } catch (e2: Exception) {
-                            AppLogger.e(TAG, "Standard B64 also failed: ${e2.message}")
-                        }
-                    }
-
                     val payload = QrCodeHelper.decodeContact(code)
-                    AppLogger.d(TAG, "Decoded payload: $payload")
 
                     if (payload == null) {
-                        AppLogger.e(TAG, "decodeContact returned null for code: ${code.take(80)}")
+                        AppLogger.e(TAG, "decodeContact returned null — invalid invite code")
                         _state.postValue(State.Error("invalid_code"))
                         return@withContext
                     }
 
+                    AppLogger.i(TAG, "Decoded: userId=${payload.userId.take(8)}..., deviceId=${payload.deviceId.take(8)}..., server=${payload.serverUrl}")
                     val contact = QrCodeHelper.payloadToContact(payload, displayName)
-                    AppLogger.i(TAG, "Adding contact: ${contact.id} / ${contact.displayName}")
+                    AppLogger.i(TAG, "Saving contact: ${contact.displayName} (${contact.id.take(8)}...)")
 
                     ContactRepository(ContactDao(currentDb.db), SessionDao(currentDb.db))
                         .add(contact)
 
+                    AppLogger.i(TAG, "Contact saved successfully")
                     _state.postValue(State.Success)
                 } catch (e: Exception) {
                     AppLogger.e(TAG, "Failed to add contact: ${e.message}", e)
@@ -111,6 +84,7 @@ class AddContactViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun loadMyQr() {
+        AppLogger.i(TAG, "loadMyQr: generating own QR/invite code")
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 try {
@@ -118,10 +92,8 @@ class AddContactViewModel(app: Application) : AndroidViewModel(app) {
                     val userId = prefs.userId
                     val deviceId = prefs.deviceId
 
-                    AppLogger.d(TAG, "loadMyQr: userId=$userId, deviceId=$deviceId, db=${db != null}")
-
                     if (userId == null || deviceId == null) {
-                        AppLogger.e(TAG, "userId or deviceId is null — prefs not set")
+                        AppLogger.e(TAG, "userId or deviceId is null — prefs not set after setup?")
                         return@withContext
                     }
 
@@ -132,15 +104,14 @@ class AddContactViewModel(app: Application) : AndroidViewModel(app) {
 
                     val settings = SettingsDao(currentDb.db).get()
                     val serverUrl = settings.serverUrl
-                    AppLogger.d(TAG, "serverUrl=$serverUrl, setupComplete=${settings.setupComplete}")
+                    AppLogger.d(TAG, "serverUrl=$serverUrl")
 
                     var publicKey = CryptoManager.getPublicKeyB64()
-                    AppLogger.d(TAG, "publicKey in memory: ${publicKey?.take(10)}")
 
                     if (publicKey == null && settings.privateKeyEncrypted != null && settings.publicKey != null) {
                         CryptoManager.loadKeys(settings.privateKeyEncrypted, settings.publicKey)
                         publicKey = CryptoManager.getPublicKeyB64()
-                        AppLogger.d(TAG, "publicKey loaded from DB: ${publicKey?.take(10)}")
+                        AppLogger.d(TAG, "Keys loaded from DB for QR generation")
                     }
 
                     if (publicKey == null) {
@@ -149,7 +120,7 @@ class AddContactViewModel(app: Application) : AndroidViewModel(app) {
                     }
 
                     val encoded = QrCodeHelper.encodeContact(userId, deviceId, publicKey, serverUrl)
-                    AppLogger.i(TAG, "QR generated, code length=${encoded.length}")
+                    AppLogger.i(TAG, "Invite code generated (${encoded.length} chars)")
 
                     val bitmap = QrCodeHelper.generateQrBitmap(encoded)
                     _myQrBitmap.postValue(bitmap)

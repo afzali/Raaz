@@ -43,6 +43,13 @@ class MessageDao(private val db: SQLiteDatabase) {
         }
     }
 
+    fun markConfirmed(serverMsgId: String) {
+        val cv = ContentValues().apply { put("status", Message.STATUS_CONFIRMED) }
+        // match by server_msg_id, only outgoing, only if currently DELIVERED (don't downgrade)
+        db.update("messages", cv, "server_msg_id=? AND direction=0 AND status=?",
+            arrayOf(serverMsgId, Message.STATUS_DELIVERED.toString()))
+    }
+
     fun updateStatus(id: String, status: Int, serverMsgId: String? = null) {
         val cv = ContentValues().apply {
             put("status", status)

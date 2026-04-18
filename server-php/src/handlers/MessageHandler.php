@@ -15,9 +15,9 @@ class MessageHandler {
         $device = Auth::requireDevice($this->db);
         $body   = json_decode(file_get_contents('php://input'), true);
 
-        $recipientId = trim($body['recipientDeviceId'] ?? '');
+        $recipientId = trim($body['recipient_device_id'] ?? $body['recipientDeviceId'] ?? '');
         $ciphertext  = trim($body['ciphertext'] ?? '');
-        $messageId   = trim($body['messageId'] ?? '');
+        $messageId   = trim($body['message_id'] ?? $body['messageId'] ?? '');
 
         if (!$recipientId || !$ciphertext) {
             http_response_code(400);
@@ -94,17 +94,43 @@ class MessageHandler {
             return;
         }
 
-        $stmt = $this->db->prepare(
-            "DELETE FROM messages WHERE id = ? AND recipient_device = ?"
-        );
+        // Get sender before deleting so we can write a receipt
+        $stmt = $this->db->prepare("SELECT sender_device FROM messages WHERE id = ? AND recipient_device = ?");
         $stmt->execute([$id, $device['id']]);
+        $msg = $stmt->fetch();
 
-        if ($stmt->rowCount() === 0) {
-            // Already deleted or not found — treat as OK (idempotent)
-            echo json_encode(['ok' => true]);
-            return;
+        $this->db->prepare("DELETE FROM messages WHERE id = ? AND recipient_device = ?")->execute([$id, $device['id']]);
+
+        // Store receipt so sender can poll and mark message as confirmed
+        if ($msg) {
+            $this->db->prepare(
+                "INSERT OR IGNORE INTO receipts (message_id, sender_device, acked_at) VALUES (?, ?, ?)"
+            )->execute([$id, $msg['sender_device'], time()]);
         }
 
         echo json_encode(['ok' => true]);
+    }
+
+    public function receipts(array $params): void {
+        $device = Auth::requireDevice($this->db);
+
+        $stmt = $this->db->prepare(
+            "SELECT message_id, acked_at FROM receipts WHERE sender_device = ? ORDER BY acked_at ASC LIMIT 200"
+        );
+        $stmt->execute([$device['id']]);
+        $rows = $stmt->fetchAll();
+
+        // Delete returned receipts — they've been delivered to sender
+        if (!empty($rows)) {
+            $ids = array_map(fn($r) => $r['message_id'], $rows);
+            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+            $this->db->prepare("DELETE FROM receipts WHERE message_id IN ($placeholders) AND sender_device = ?")
+                ->execute([...$ids, $device['id']]);
+        }
+
+        echo json_encode(['receipts' => array_map(fn($r) => [
+            'message_id' => $r['message_id'],
+            'acked_at'   => (int)$r['acked_at'],
+        ], $rows)]);
     }
 }

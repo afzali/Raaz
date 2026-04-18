@@ -22,7 +22,7 @@ import kotlinx.coroutines.withContext
 
 class ChatViewModel(app: Application) : AndroidViewModel(app) {
 
-    private val TAG = "ChatVM"
+    private val TAG = AppLogger.Cat.UI
 
     private val _messages = MutableLiveData<List<Message>>(emptyList())
     val messages: LiveData<List<Message>> = _messages
@@ -63,6 +63,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                     _session.postValue(s)
                     contactPublicKey = s?.contactPublicKey ?: ""
                     contactId = s?.contactId ?: ""
+                    AppLogger.i(TAG, "ChatVM init: session=${sessionId.take(8)}..., contact=${contactId.take(8)}...")
 
                     loadMessages()
                 } catch (e: Exception) {
@@ -72,17 +73,24 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    private fun loadMessages() {
+    fun reloadMessages() {
         val list = repo?.getMessages(sessionId) ?: emptyList()
         _messages.postValue(list)
     }
 
+    private fun loadMessages() = reloadMessages()
+
     fun sendMessage(text: String) {
-        if (text.isBlank() || contactPublicKey.isBlank()) return
+        if (text.isBlank() || contactPublicKey.isBlank()) {
+            if (contactPublicKey.isBlank()) AppLogger.w(TAG, "sendMessage: no contact public key — cannot encrypt")
+            return
+        }
+        AppLogger.i(TAG, "Sending message (${text.length} chars) to session ${sessionId.take(8)}...")
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 try {
                     val ciphertext = CryptoManager.encryptMessage(text, contactPublicKey)
+                    AppLogger.d(TAG, "Message encrypted — ciphertext ${ciphertext.length} chars")
                     val now = System.currentTimeMillis()
                     val msg = Message(
                         id = CryptoManager.generateMessageId(),
@@ -97,6 +105,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                     )
                     repo?.insertOutgoing(msg)
                     loadMessages()
+                    AppLogger.i(TAG, "Message queued — triggering immediate send")
                     repo?.syncOutgoing()
                     loadMessages()
                 } catch (e: Exception) {
@@ -134,10 +143,10 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                         contactId, payload.publicKey, payload.deviceId, payload.serverUrl
                     )
                     contactPublicKey = payload.publicKey
-                    AppLogger.i("ChatVM", "Re-keyed contact $contactId with new public key")
+                    AppLogger.i(TAG, "Re-keyed contact ${contactId.take(8)}... with new public key")
                     _rekeyResult.postValue(RekeyResult.Success)
                 } catch (e: Exception) {
-                    AppLogger.e("ChatVM", "Re-key failed: ${e.message}", e)
+                    AppLogger.e(TAG, "Re-key failed: ${e.message}", e)
                     _rekeyResult.postValue(RekeyResult.InvalidCode)
                 }
             }
@@ -145,4 +154,22 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun clearRekeyResult() { _rekeyResult.value = null }
+
+    fun renameContact(newName: String) {
+        val trimmed = newName.trim()
+        if (trimmed.isBlank() || contactId.isBlank()) return
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                try {
+                    val currentDb = db ?: return@withContext
+                    ContactDao(currentDb.db).rename(contactId, trimmed)
+                    AppLogger.i(TAG, "Contact renamed: ${contactId.take(8)}... → $trimmed")
+                    val s = SessionDao(currentDb.db).getById(sessionId)
+                    _session.postValue(s)
+                } catch (e: Exception) {
+                    AppLogger.e(TAG, "Rename failed: ${e.message}", e)
+                }
+            }
+        }
+    }
 }

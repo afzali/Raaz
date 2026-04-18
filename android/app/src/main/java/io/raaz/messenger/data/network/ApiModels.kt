@@ -47,3 +47,12 @@ data class HealthResponse(
     @SerializedName("version") val version: String,
     @SerializedName("time") val time: Long
 )
+
+data class ReceiptsResponse(
+    @SerializedName("receipts") val receipts: List<DeliveryReceipt>
+)
+
+data class DeliveryReceipt(
+    @SerializedName("message_id") val messageId: String,
+    @SerializedName("acked_at") val ackedAt: Long
+)

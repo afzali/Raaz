@@ -13,13 +13,18 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.lifecycle.lifecycleScope
 import io.raaz.messenger.R
 import io.raaz.messenger.databinding.FragmentChatBinding
 import io.raaz.messenger.ui.SharedViewModel
+import io.raaz.messenger.notification.RaazNotificationManager
 import io.raaz.messenger.util.ForegroundSyncManager
 import io.raaz.messenger.util.LocaleManager
 import io.raaz.messenger.util.hideKeyboard
 import io.raaz.messenger.util.toast
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.launch
 
 class ChatFragment : Fragment() {
 
@@ -48,7 +53,8 @@ class ChatFragment : Fragment() {
 
         binding.toolbar.setOnMenuItemClickListener { item ->
             when (item.itemId) {
-                R.id.action_rekey -> { showRekeyDialog(); true }
+                R.id.action_rename -> { showRenameDialog(); true }
+                R.id.action_rekey  -> { showRekeyDialog(); true }
                 else -> false
             }
         }
@@ -93,16 +99,46 @@ class ChatFragment : Fragment() {
             viewModel.init(args.sessionId, dbKey)
         }
         viewModel.syncIncoming()
+
+        // Reload messages whenever a background sync finishes
+        viewLifecycleOwner.lifecycleScope.launch {
+            ForegroundSyncManager.isSyncing
+                .distinctUntilChanged()
+                .filter { syncing -> !syncing }
+                .collect { viewModel.reloadMessages() }
+        }
     }
 
     override fun onResume() {
         super.onResume()
         ForegroundSyncManager.startPolling()
+        RaazNotificationManager.clearMessageNotification(requireContext())
     }
 
     override fun onPause() {
         super.onPause()
         ForegroundSyncManager.stopPolling()
+    }
+
+    private fun showRenameDialog() {
+        val input = EditText(requireContext()).apply {
+            hint = getString(R.string.chat_rename_hint)
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_CAP_WORDS
+            setText(binding.toolbar.title)
+            setPadding(48, 24, 48, 24)
+        }
+        AlertDialog.Builder(requireContext())
+            .setTitle(getString(R.string.chat_rename))
+            .setView(input)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                val name = input.text?.toString()?.trim() ?: ""
+                if (name.isNotBlank()) {
+                    viewModel.renameContact(name)
+                    binding.toolbar.title = name
+                }
+            }
+            .setNegativeButton(getString(R.string.cancel), null)
+            .show()
     }
 
     private fun showRekeyDialog() {

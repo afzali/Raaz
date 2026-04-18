@@ -17,7 +17,7 @@ import kotlinx.coroutines.withContext
 
 class ChatsViewModel(app: Application) : AndroidViewModel(app) {
 
-    private val TAG = "ChatsVM"
+    private val TAG = AppLogger.Cat.UI
 
     private val _sessions = MutableLiveData<List<Session>>(emptyList())
     val sessions: LiveData<List<Session>> = _sessions
@@ -30,6 +30,7 @@ class ChatsViewModel(app: Application) : AndroidViewModel(app) {
                 try {
                     val db = RaazDatabase.getInstance(getApplication(), dbKey)
                     repo = ContactRepository(ContactDao(db.db), SessionDao(db.db))
+                    AppLogger.i(TAG, "ChatsVM initialized")
                     loadSessions()
                 } catch (e: Exception) {
                     AppLogger.e(TAG, "Failed to init ChatsViewModel: ${e.message}", e)

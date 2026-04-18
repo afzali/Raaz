@@ -66,15 +66,22 @@ class MessageAdapter : ListAdapter<MessageAdapter.Item, RecyclerView.ViewHolder>
         fun bind(item: Item.Msg) {
             b.tvMessage.text = item.message.displayText
             b.tvTime.text = DateFormatter.formatMessageTime(b.root.context, item.message.createdAt)
-            b.ivStatus.setImageResource(when (item.message.status) {
-                Message.STATUS_CONFIRMED, Message.STATUS_DELIVERED -> R.drawable.ic_check_double
-                Message.STATUS_SENT -> R.drawable.ic_check
-                else -> R.drawable.ic_clock
-            })
-            // Tail: bottom-right corner is sharp when tail, rounded otherwise
+            val isToday = DateFormatter.isSameDay(item.message.createdAt, System.currentTimeMillis())
+            val (iconRes, tintColor) = when {
+                item.message.status == Message.STATUS_CONFIRMED && isToday ->
+                    Pair(R.drawable.ic_check_double, 0xFF4CAF50.toInt()) // green = confirmed today
+                item.message.status == Message.STATUS_DELIVERED && isToday ->
+                    Pair(R.drawable.ic_check_double, 0xFF4FC3F7.toInt()) // blue = delivered today
+                item.message.status == Message.STATUS_SENT ->
+                    Pair(R.drawable.ic_check, 0xCCFFFFFF.toInt())
+                item.message.status == Message.STATUS_DELIVERED || item.message.status == Message.STATUS_CONFIRMED ->
+                    Pair(R.drawable.ic_check_double, 0xCCFFFFFF.toInt()) // older: white
+                else ->
+                    Pair(R.drawable.ic_clock, 0xCCFFFFFF.toInt())
+            }
+            b.ivStatus.setImageResource(iconRes)
+            b.ivStatus.setColorFilter(tintColor, android.graphics.PorterDuff.Mode.SRC_IN)
             val r = b.root.context.resources
-            val big = r.getDimension(R.dimen.bubble_radius)
-            val small = r.getDimension(R.dimen.bubble_radius_small)
             b.bubble.background = androidx.core.content.ContextCompat.getDrawable(
                 b.root.context,
                 if (item.isTail) R.drawable.bg_bubble_outgoing else R.drawable.bg_bubble_outgoing_mid

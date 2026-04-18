@@ -53,6 +53,10 @@ object RaazNotificationManager {
         } catch (e: SecurityException) { }
     }
 
+    fun clearMessageNotification(context: Context) {
+        NotificationManagerCompat.from(context).cancel(NOTIF_ID_MESSAGES)
+    }
+
     fun showNewMessageNotification(context: Context, count: Int = 1) {
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK

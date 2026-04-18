@@ -1,7 +1,7 @@
 package io.raaz.messenger.data.network
 
+import io.raaz.messenger.util.LoggingInterceptor
 import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -30,6 +30,11 @@ interface RaazApi {
         @Path("id") serverMessageId: String
     ): Response<Unit>
 
+    @GET("api/v1/receipts")
+    suspend fun pullReceipts(
+        @Header("Authorization") auth: String
+    ): Response<ReceiptsResponse>
+
     @GET("api/v1/health")
     suspend fun health(): Response<HealthResponse>
 }
@@ -49,13 +54,10 @@ object RaazApiService {
     }
 
     private fun build(baseUrl: String): RaazApi {
-        val logging = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BASIC
-        }
         val client = OkHttpClient.Builder()
             .connectTimeout(15, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
-            .addInterceptor(logging)
+            .addInterceptor(LoggingInterceptor())
             .build()
 
         return Retrofit.Builder()

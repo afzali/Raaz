@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import io.raaz.messenger.R
 import io.raaz.messenger.databinding.FragmentChatsBinding
 import io.raaz.messenger.ui.SharedViewModel
+import io.raaz.messenger.notification.RaazNotificationManager
 import io.raaz.messenger.util.ForegroundSyncManager
 import io.raaz.messenger.util.LocaleManager
 import io.raaz.messenger.util.hide
@@ -111,6 +112,7 @@ class ChatsFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
+        RaazNotificationManager.clearMessageNotification(requireContext())
         ForegroundSyncManager.startPolling()
         // Immediate sync on resume + refresh list
         viewLifecycleOwner.lifecycleScope.launch {

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">راز</string>
+    <!-- app_name is set dynamically by build.gradle productFlavors -->
 
     <!-- Lock screen -->
     <string name="lock_title">راز</string>

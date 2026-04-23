@@ -78,7 +78,11 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         _messages.postValue(list)
     }
 
-    private fun loadMessages() = reloadMessages()
+    private fun loadMessages() {
+        reloadMessages()
+        // Mark all incoming messages as read when chat is opened
+        repo?.markIncomingMessagesAsRead(sessionId)
+    }
 
     fun sendMessage(text: String) {
         if (text.isBlank() || contactPublicKey.isBlank()) {

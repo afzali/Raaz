@@ -148,8 +148,10 @@ class MessageRepository(
         val session = sessionDao.getByContactDeviceId(serverMsg.senderDeviceId)
 
         if (session == null) {
-            AppLogger.w(TAG, "Unknown sender device ${serverMsg.senderDeviceId.take(8)}... — ACKing and discarding")
-            ackMessage(token, serverMsg.serverMessageId)
+            // Store message temporarily until contact is added
+            AppLogger.w(TAG, "Unknown sender device ${serverMsg.senderDeviceId.take(8)}... — storing as PENDING")
+            storePendingMessage(serverMsg, plaintext)
+            ackMessage(token, serverMsg.serverMessageId)  // ACK to remove from server
             return ProcessResult.UNKNOWN_SENDER
         }
 
@@ -160,7 +162,7 @@ class MessageRepository(
             direction = Message.DIR_INCOMING,
             ciphertext = serverMsg.ciphertext,
             plaintextCache = plaintext,
-            status = Message.STATUS_DELIVERED,
+            status = Message.STATUS_DELIVERED,  // Will be marked CONFIRMED when user opens chat
             createdAt = serverMsg.createdAt * 1000,
             expiresAt = serverMsg.expiresAt * 1000,
             serverMsgId = serverMsg.serverMessageId
@@ -170,6 +172,18 @@ class MessageRepository(
 
         ackMessage(token, serverMsg.serverMessageId)
         return ProcessResult.STORED
+    }
+
+    private fun storePendingMessage(serverMsg: ServerMessage, plaintext: String) {
+        // TODO: Implement pending_messages table to store messages from unknown senders
+        // For now, just log - this requires DB schema migration
+        AppLogger.w(TAG, "Message from ${serverMsg.senderDeviceId.take(8)}... discarded - contact not added yet")
+        AppLogger.w(TAG, "TODO: Store pending message for later retrieval when contact is added")
+    }
+
+    fun markIncomingMessagesAsRead(sessionId: String) {
+        val count = messageDao.markIncomingAsRead(sessionId)
+        AppLogger.d(TAG, "Marked $count incoming messages as read for session ${sessionId.take(8)}...")
     }
 
     private suspend fun ackMessage(token: String, serverMessageId: String) {

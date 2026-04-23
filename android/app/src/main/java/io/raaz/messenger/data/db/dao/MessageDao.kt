@@ -72,6 +72,13 @@ class MessageDao(private val db: SQLiteDatabase) {
         db.delete("messages", "session_id=?", arrayOf(sessionId))
     }
 
+    // Mark all delivered incoming messages as confirmed (read) for a session
+    fun markIncomingAsRead(sessionId: String): Int {
+        val cv = ContentValues().apply { put("status", Message.STATUS_CONFIRMED) }
+        return db.update("messages", cv, "session_id=? AND direction=? AND status=?",
+            arrayOf(sessionId, Message.DIR_INCOMING.toString(), Message.STATUS_DELIVERED.toString()))
+    }
+
     fun getPendingIncoming(): List<Message> {
         val cursor = db.rawQuery(
             "SELECT id, session_id, direction, ciphertext, plaintext_cache, status, created_at, expires_at, server_msg_id, nonce FROM messages WHERE direction=1 AND status < 3",

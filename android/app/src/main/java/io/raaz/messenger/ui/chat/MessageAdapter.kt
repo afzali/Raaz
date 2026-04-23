@@ -67,15 +67,22 @@ class MessageAdapter : ListAdapter<MessageAdapter.Item, RecyclerView.ViewHolder>
             b.tvMessage.text = item.message.displayText
             b.tvTime.text = DateFormatter.formatMessageTime(b.root.context, item.message.createdAt)
             val isToday = DateFormatter.isSameDay(item.message.createdAt, System.currentTimeMillis())
-            val (iconRes, tintColor) = when {
-                item.message.status == Message.STATUS_CONFIRMED && isToday ->
-                    Pair(R.drawable.ic_check_double, 0xFF4CAF50.toInt()) // green = confirmed today
-                item.message.status == Message.STATUS_DELIVERED && isToday ->
-                    Pair(R.drawable.ic_check_double, 0xFF4FC3F7.toInt()) // blue = delivered today
-                item.message.status == Message.STATUS_SENT ->
-                    Pair(R.drawable.ic_check, 0xCCFFFFFF.toInt())
-                item.message.status == Message.STATUS_DELIVERED || item.message.status == Message.STATUS_CONFIRMED ->
-                    Pair(R.drawable.ic_check_double, 0xCCFFFFFF.toInt()) // older: white
+            
+            // Status logic:
+            // 0=queued (clock), 1=sent (1 gray check), 2=delivered (2 blue), 3=confirmed (2 green), 4=expired (1 red)
+            val (iconRes, tintColor) = when (item.message.status) {
+                Message.STATUS_EXPIRED -> 
+                    Pair(R.drawable.ic_check, 0xFFE53935.toInt()) // 1 red check = expired without delivery
+                Message.STATUS_QUEUED ->
+                    Pair(R.drawable.ic_clock, 0xCCFFFFFF.toInt()) // clock = waiting to send
+                Message.STATUS_SENT ->
+                    Pair(R.drawable.ic_check, 0xFF9E9E9E.toInt()) // 1 gray = sent but not delivered
+                Message.STATUS_DELIVERED -> 
+                    if (isToday) Pair(R.drawable.ic_check_double, 0xFF4FC3F7.toInt()) // 2 blue = delivered today
+                    else Pair(R.drawable.ic_check_double, 0xCCFFFFFF.toInt()) // older: white
+                Message.STATUS_CONFIRMED ->
+                    if (isToday) Pair(R.drawable.ic_check_double, 0xFF4CAF50.toInt()) // 2 green = confirmed today
+                    else Pair(R.drawable.ic_check_double, 0xCCFFFFFF.toInt()) // older: white
                 else ->
                     Pair(R.drawable.ic_clock, 0xCCFFFFFF.toInt())
             }

@@ -10,6 +10,7 @@ import io.raaz.messenger.crypto.QrCodeHelper
 import io.raaz.messenger.data.db.RaazDatabase
 import io.raaz.messenger.data.db.dao.ContactDao
 import io.raaz.messenger.data.db.dao.MessageDao
+import io.raaz.messenger.data.db.dao.PendingMessageDao
 import io.raaz.messenger.data.db.dao.SessionDao
 import io.raaz.messenger.data.model.Message
 import io.raaz.messenger.data.model.Session
@@ -51,11 +52,12 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 try {
                     db = RaazDatabase.getInstance(getApplication(), dbKey)
                     val sessionDao = SessionDao(db!!.db)
+                    val pendingDao = PendingMessageDao(db!!.db)
                     val prefs = RaazPreferences(getApplication())
                     val settings = io.raaz.messenger.data.db.dao.SettingsDao(db!!.db).get()
 
                     repo = MessageRepository(
-                        MessageDao(db!!.db), sessionDao, prefs,
+                        MessageDao(db!!.db), sessionDao, pendingDao, prefs,
                         settings.serverUrl, getApplication()
                     )
 
@@ -63,7 +65,16 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                     _session.postValue(s)
                     contactPublicKey = s?.contactPublicKey ?: ""
                     contactId = s?.contactId ?: ""
+                    val deviceId = s?.contactDeviceId ?: ""
                     AppLogger.i(TAG, "ChatVM init: session=${sessionId.take(8)}..., contact=${contactId.take(8)}...")
+
+                    // Move any pending messages from this device to this session
+                    if (deviceId.isNotBlank()) {
+                        val moved = repo?.movePendingMessagesToSession(deviceId, sessionId) ?: 0
+                        if (moved > 0) {
+                            AppLogger.i(TAG, "Moved $moved pending messages to this chat")
+                        }
+                    }
 
                     loadMessages()
                 } catch (e: Exception) {
@@ -80,8 +91,19 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun loadMessages() {
         reloadMessages()
-        // Mark all incoming messages as read when chat is opened
-        repo?.markIncomingMessagesAsRead(sessionId)
+        // Mark all delivered incoming messages as read (confirmed) when chat is opened
+        markMessagesAsRead()
+    }
+    
+    fun markMessagesAsRead() {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                val count = repo?.markIncomingMessagesAsRead(sessionId) ?: 0
+                if (count > 0) {
+                    AppLogger.i(TAG, "Marked $count messages as read in session ${sessionId.take(8)}...")
+                }
+            }
+        }
     }
 
     fun sendMessage(text: String) {
@@ -123,7 +145,11 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 val count = repo?.syncIncoming() ?: 0
-                if (count > 0) loadMessages()
+                if (count > 0) {
+                    loadMessages()
+                    // Mark newly arrived messages as read since user is in chat
+                    markMessagesAsRead()
+                }
             }
         }
     }

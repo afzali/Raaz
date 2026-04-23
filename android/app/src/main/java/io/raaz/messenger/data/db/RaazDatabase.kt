@@ -66,6 +66,21 @@ class RaazDatabase private constructor(context: Context, key: ByteArray) :
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_messages_session ON messages(session_id, created_at)")
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_messages_status ON messages(status)")
 
+        // Table for messages from unknown senders (before contact is added)
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS pending_messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                server_msg_id TEXT UNIQUE NOT NULL,
+                sender_device_id TEXT NOT NULL,
+                ciphertext TEXT NOT NULL,
+                plaintext_cache TEXT NOT NULL,
+                created_at INTEGER NOT NULL,
+                expires_at INTEGER,
+                received_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000)
+            )
+        """.trimIndent())
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_pending_sender ON pending_messages(sender_device_id)")
+
         db.execSQL("""
             CREATE TABLE IF NOT EXISTS app_settings (
                 id INTEGER PRIMARY KEY DEFAULT 1,
@@ -89,12 +104,29 @@ class RaazDatabase private constructor(context: Context, key: ByteArray) :
 
     override fun onUpgrade(db: CipherDB, oldVersion: Int, newVersion: Int) {
         AppLogger.i(TAG, "RaazDatabase upgrade $oldVersion -> $newVersion")
+        if (oldVersion < 2) {
+            // Add pending_messages table in v2
+            db.execSQL("""
+                CREATE TABLE IF NOT EXISTS pending_messages (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    server_msg_id TEXT UNIQUE NOT NULL,
+                    sender_device_id TEXT NOT NULL,
+                    ciphertext TEXT NOT NULL,
+                    plaintext_cache TEXT NOT NULL,
+                    created_at INTEGER NOT NULL,
+                    expires_at INTEGER,
+                    received_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000)
+                )
+            """.trimIndent())
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_pending_sender ON pending_messages(sender_device_id)")
+            AppLogger.i(TAG, "Added pending_messages table (v2)")
+        }
     }
 
     companion object {
         private const val TAG = "RaazDB"
         const val DB_NAME = "raaz_main.db"
-        private const val DB_VERSION = 1
+        private const val DB_VERSION = 2
 
         @Volatile private var instance: RaazDatabase? = null
 

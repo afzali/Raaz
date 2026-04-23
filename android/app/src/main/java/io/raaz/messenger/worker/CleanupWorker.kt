@@ -5,6 +5,7 @@ import androidx.work.*
 import io.raaz.messenger.crypto.CryptoManager
 import io.raaz.messenger.data.db.RaazDatabase
 import io.raaz.messenger.data.db.dao.MessageDao
+import io.raaz.messenger.data.db.dao.PendingMessageDao
 import io.raaz.messenger.data.db.dao.SessionDao
 import io.raaz.messenger.data.db.dao.SettingsDao
 import io.raaz.messenger.data.preferences.RaazPreferences
@@ -26,7 +27,7 @@ class CleanupWorker(context: Context, params: WorkerParameters) : CoroutineWorke
             val prefs = RaazPreferences(applicationContext)
 
             val repo = MessageRepository(
-                MessageDao(db.db), SessionDao(db.db), prefs, settings.serverUrl
+                MessageDao(db.db), SessionDao(db.db), PendingMessageDao(db.db), prefs, settings.serverUrl
             )
             repo.deleteExpired()
             AppLogger.d(TAG, "Expired messages cleaned up")

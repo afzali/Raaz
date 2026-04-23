@@ -5,6 +5,7 @@ import androidx.work.*
 import io.raaz.messenger.crypto.CryptoManager
 import io.raaz.messenger.data.db.RaazDatabase
 import io.raaz.messenger.data.db.dao.MessageDao
+import io.raaz.messenger.data.db.dao.PendingMessageDao
 import io.raaz.messenger.data.db.dao.SessionDao
 import io.raaz.messenger.data.db.dao.SettingsDao
 import io.raaz.messenger.data.preferences.RaazPreferences
@@ -33,7 +34,7 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
             val prefs = RaazPreferences(applicationContext)
 
             val repo = MessageRepository(
-                MessageDao(db.db), SessionDao(db.db), prefs, settings.serverUrl, applicationContext
+                MessageDao(db.db), SessionDao(db.db), PendingMessageDao(db.db), prefs, settings.serverUrl, applicationContext
             )
 
             val sent = repo.syncOutgoing()

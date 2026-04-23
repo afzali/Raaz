@@ -3,8 +3,10 @@ package io.raaz.messenger.data.repository
 import android.content.Context
 import io.raaz.messenger.crypto.CryptoManager
 import io.raaz.messenger.data.db.dao.MessageDao
+import io.raaz.messenger.data.db.dao.PendingMessageDao
 import io.raaz.messenger.data.db.dao.SessionDao
 import io.raaz.messenger.data.model.Message
+import io.raaz.messenger.data.model.PendingMessage
 import io.raaz.messenger.data.network.PushMessageRequest
 import io.raaz.messenger.data.network.RaazApiService
 import io.raaz.messenger.data.network.ServerMessage
@@ -18,6 +20,7 @@ import kotlinx.coroutines.withContext
 class MessageRepository(
     private val messageDao: MessageDao,
     private val sessionDao: SessionDao,
+    private val pendingDao: PendingMessageDao? = null,  // Optional for backward compat
     private val prefs: RaazPreferences,
     private val serverUrl: String,
     private val context: Context? = null
@@ -175,15 +178,79 @@ class MessageRepository(
     }
 
     private fun storePendingMessage(serverMsg: ServerMessage, plaintext: String) {
-        // TODO: Implement pending_messages table to store messages from unknown senders
-        // For now, just log - this requires DB schema migration
-        AppLogger.w(TAG, "Message from ${serverMsg.senderDeviceId.take(8)}... discarded - contact not added yet")
-        AppLogger.w(TAG, "TODO: Store pending message for later retrieval when contact is added")
+        if (pendingDao == null) {
+            AppLogger.w(TAG, "PendingMessageDao not available - message from ${serverMsg.senderDeviceId.take(8)}... discarded")
+            return
+        }
+        try {
+            val pending = PendingMessage(
+                serverMsgId = serverMsg.serverMessageId,
+                senderDeviceId = serverMsg.senderDeviceId,
+                ciphertext = serverMsg.ciphertext,
+                plaintextCache = plaintext,
+                createdAt = serverMsg.createdAt * 1000,
+                expiresAt = serverMsg.expiresAt * 1000
+            )
+            val id = pendingDao.insert(pending)
+            AppLogger.i(TAG, "Stored pending message id=$id from ${serverMsg.senderDeviceId.take(8)}...")
+            
+            // Show notification with message preview
+            if (context != null) {
+                RaazNotificationManager.showUnknownSenderNotification(
+                    context, 
+                    1, 
+                    plaintext.take(30),
+                    serverMsg.senderDeviceId
+                )
+            }
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Failed to store pending message: ${e.message}", e)
+        }
     }
 
-    fun markIncomingMessagesAsRead(sessionId: String) {
+    // Move pending messages to regular messages when contact is added
+    fun movePendingMessagesToSession(deviceId: String, sessionId: String): Int {
+        if (pendingDao == null) return 0
+        
+        val pending = pendingDao.getBySender(deviceId)
+        if (pending.isEmpty()) return 0
+        
+        var moved = 0
+        for (p in pending) {
+            try {
+                val msg = Message(
+                    id = p.serverMsgId,
+                    sessionId = sessionId,
+                    direction = Message.DIR_INCOMING,
+                    ciphertext = p.ciphertext,
+                    plaintextCache = p.plaintextCache,
+                    status = Message.STATUS_DELIVERED,  // Mark as delivered
+                    createdAt = p.createdAt,
+                    expiresAt = p.expiresAt,
+                    serverMsgId = p.serverMsgId
+                )
+                messageDao.insert(msg)
+                moved++
+            } catch (e: Exception) {
+                AppLogger.w(TAG, "Failed to move pending message ${p.id}: ${e.message}")
+            }
+        }
+        
+        // Delete moved messages from pending
+        if (moved > 0) {
+            pendingDao.deleteBySender(deviceId)
+            AppLogger.i(TAG, "Moved $moved pending messages to session ${sessionId.take(8)}...")
+        }
+        return moved
+    }
+
+    fun getPendingMessages(): List<PendingMessage> = pendingDao?.getAll() ?: emptyList()
+    fun getPendingCount(): Int = pendingDao?.getCount() ?: 0
+
+    fun markIncomingMessagesAsRead(sessionId: String): Int {
         val count = messageDao.markIncomingAsRead(sessionId)
         AppLogger.d(TAG, "Marked $count incoming messages as read for session ${sessionId.take(8)}...")
+        return count
     }
 
     private suspend fun ackMessage(token: String, serverMessageId: String) {
@@ -216,5 +283,8 @@ class MessageRepository(
         }
     }
 
-    fun deleteExpired() = messageDao.deleteExpired()
+    fun deleteExpired() {
+        messageDao.deleteExpired()
+        pendingDao?.deleteExpired()
+    }
 }

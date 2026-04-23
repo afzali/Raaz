@@ -10,10 +10,13 @@ import io.raaz.messenger.crypto.CryptoManager
 import io.raaz.messenger.crypto.QrCodeHelper
 import io.raaz.messenger.data.db.RaazDatabase
 import io.raaz.messenger.data.db.dao.ContactDao
+import io.raaz.messenger.data.db.dao.MessageDao
+import io.raaz.messenger.data.db.dao.PendingMessageDao
 import io.raaz.messenger.data.db.dao.SessionDao
 import io.raaz.messenger.data.db.dao.SettingsDao
 import io.raaz.messenger.data.preferences.RaazPreferences
 import io.raaz.messenger.data.repository.ContactRepository
+import io.raaz.messenger.data.repository.MessageRepository
 import io.raaz.messenger.util.AppLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -70,10 +73,25 @@ class AddContactViewModel(app: Application) : AndroidViewModel(app) {
                     val contact = QrCodeHelper.payloadToContact(payload, displayName)
                     AppLogger.i(TAG, "Saving contact: ${contact.displayName} (${contact.id.take(8)}...)")
 
-                    ContactRepository(ContactDao(currentDb.db), SessionDao(currentDb.db))
-                        .add(contact)
-
-                    AppLogger.i(TAG, "Contact saved successfully")
+                    val contactRepo = ContactRepository(ContactDao(currentDb.db), SessionDao(currentDb.db))
+                    val session = contactRepo.add(contact)
+                    
+                    AppLogger.i(TAG, "Contact saved, session=${session.id.take(8)}...")
+                    
+                    // Move any pending messages from this device to the new session
+                    val prefs = RaazPreferences(getApplication())
+                    val settings = SettingsDao(currentDb.db).get()
+                    val msgRepo = MessageRepository(
+                        MessageDao(currentDb.db), 
+                        SessionDao(currentDb.db),
+                        PendingMessageDao(currentDb.db),
+                        prefs,
+                        settings.serverUrl
+                    )
+                    val moved = msgRepo.movePendingMessagesToSession(contact.deviceId, session.id)
+                    if (moved > 0) {
+                        AppLogger.i(TAG, "Moved $moved pending messages to new session")
+                    }
                     _state.postValue(State.Success)
                 } catch (e: Exception) {
                     AppLogger.e(TAG, "Failed to add contact: ${e.message}", e)

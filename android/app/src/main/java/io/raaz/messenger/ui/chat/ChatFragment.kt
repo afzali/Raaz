@@ -111,6 +111,14 @@ class ChatFragment : Fragment() {
         super.onResume()
         ForegroundSyncManager.startPolling()
         RaazNotificationManager.clearMessageNotification(requireContext())
+        
+        // Immediate sync and refresh to get new messages
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.syncIncoming()
+            viewModel.reloadMessages()
+            // Mark messages as read since user is viewing the chat
+            viewModel.markMessagesAsRead()
+        }
     }
 
     override fun onPause() {

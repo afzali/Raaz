@@ -114,7 +114,7 @@ class ChatsFragment : Fragment() {
         super.onResume()
         RaazNotificationManager.clearMessageNotification(requireContext())
         ForegroundSyncManager.startPolling()
-        // Immediate sync on resume + refresh list
+        // Immediate sync on resume + refresh list to update unread counts
         viewLifecycleOwner.lifecycleScope.launch {
             ForegroundSyncManager.syncNow()
             viewModel.refresh()

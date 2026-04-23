@@ -4,6 +4,7 @@ import android.content.Context
 import io.raaz.messenger.crypto.CryptoManager
 import io.raaz.messenger.data.db.RaazDatabase
 import io.raaz.messenger.data.db.dao.MessageDao
+import io.raaz.messenger.data.db.dao.PendingMessageDao
 import io.raaz.messenger.data.db.dao.SessionDao
 import io.raaz.messenger.data.db.dao.SettingsDao
 import io.raaz.messenger.data.network.PocketBaseRealtimeClient
@@ -122,7 +123,7 @@ object ForegroundSyncManager {
             val settings = SettingsDao(db.db).get()
             val prefs = RaazPreferences(ctx)
             val repo = MessageRepository(
-                MessageDao(db.db), SessionDao(db.db), prefs, settings.serverUrl, ctx
+                MessageDao(db.db), SessionDao(db.db), PendingMessageDao(db.db), prefs, settings.serverUrl, ctx
             )
             val sent = repo.syncOutgoing()
             val received = repo.syncIncoming()

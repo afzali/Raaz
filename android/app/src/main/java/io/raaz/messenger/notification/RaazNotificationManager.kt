@@ -31,22 +31,37 @@ object RaazNotificationManager {
         }
     }
 
-    fun showUnknownSenderNotification(context: Context, count: Int = 1) {
+    fun showUnknownSenderNotification(context: Context, count: Int = 1, preview: String? = null, deviceId: String? = null) {
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            // Add deviceId to intent so app can show add contact dialog
+            deviceId?.let { putExtra("unknown_sender_device_id", it) }
         }
         val pendingIntent = PendingIntent.getActivity(
-            context, 1, intent, PendingIntent.FLAG_IMMUTABLE
+            context, 1, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
-        val title = context.getString(R.string.notif_unknown_sender)
-        val body = context.getString(R.string.notif_unknown_sender_body)
+        
+        val title = if (preview != null && preview.isNotBlank()) {
+            // Show preview of message from unknown sender
+            "📩 ${preview.take(30)}${if (preview.length > 30) "..." else ""}"
+        } else {
+            context.getString(R.string.notif_unknown_sender)
+        }
+        
+        val body = if (deviceId != null) {
+            "From: ${deviceId.take(8)}... • Tap to add contact"
+        } else {
+            context.getString(R.string.notif_unknown_sender_body)
+        }
+        
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_shield)
             .setContentTitle(title)
             .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)  // Higher priority for unknown senders
             .build()
         try {
             NotificationManagerCompat.from(context).notify(NOTIF_ID_UNKNOWN, notification)

@@ -30,11 +30,17 @@ class RaazPreferences(context: Context) {
         get() = prefs.getString(KEY_DEVICE_ID, null)
         set(v) = prefs.edit().putString(KEY_DEVICE_ID, v).apply()
 
+    // Cached serverUrl accessible without DB (for background checks while locked)
+    var serverUrl: String?
+        get() = prefs.getString(KEY_SERVER_URL, null)
+        set(v) = prefs.edit().putString(KEY_SERVER_URL, v).apply()
+
     fun clear() = prefs.edit().clear().apply()
 
     companion object {
         private const val KEY_TOKEN = "bearer_token"
         private const val KEY_USER_ID = "user_id"
         private const val KEY_DEVICE_ID = "device_id"
+        private const val KEY_SERVER_URL = "server_url"
     }
 }

@@ -1,8 +1,10 @@
 package io.raaz.messenger.data.repository
 
 import android.content.Context
+import io.raaz.messenger.crypto.BiometricKeyStore
 import io.raaz.messenger.crypto.CryptoManager
 import io.raaz.messenger.crypto.PasswordManager
+import javax.crypto.Cipher
 import io.raaz.messenger.data.db.AuthDatabase
 import io.raaz.messenger.data.db.RaazDatabase
 import io.raaz.messenger.data.db.dao.SettingsDao
@@ -40,6 +42,7 @@ class AuthRepository(private val context: Context) {
             AppLogger.d(TAG, "PublicKey(first12): ${publicKeyB64.take(12)}...")
 
             settingsDao.markSetupComplete(userId, deviceId, publicKeyB64, privateKeyB64, serverUrl)
+            RaazPreferences(context).serverUrl = serverUrl  // cache for background workers
             AppLogger.i(TAG, "Settings saved to DB (serverUrl=$serverUrl)")
 
             CryptoManager.loadKeys(privateKeyB64, publicKeyB64)
@@ -89,7 +92,7 @@ class AuthRepository(private val context: Context) {
         }
 
         if (authDb.shouldWipe()) {
-            AppLogger.w(TAG, "failStreak >= 9 — triggering wipe")
+            AppLogger.w(TAG, "failStreak >= 20 — triggering wipe")
             wipeAll()
             return@withContext UnlockResult.Wiped
         }
@@ -113,6 +116,7 @@ class AuthRepository(private val context: Context) {
             // Re-register if no token (e.g. first launch, server changed, app reinstall)
             val prefs = RaazPreferences(context)
             val savedServerUrl = settings.serverUrl
+            prefs.serverUrl = savedServerUrl  // cache for background workers
             AppLogger.i(TAG, "Loaded saved server URL: $savedServerUrl")
             if (prefs.bearerToken == null && settings.userId != null && settings.publicKey != null) {
                 val userId = settings.userId
@@ -145,13 +149,13 @@ class AuthRepository(private val context: Context) {
         } catch (e: Exception) {
             AppLogger.w(TAG, "Wrong password or DB open failed: ${e.message}")
             val newState = authDb.recordFailedAttempt()
-            AppLogger.w(TAG, "Failed attempt recorded — failStreak=${newState.failStreak}/9")
-            if (newState.failStreak >= 9) {
+            AppLogger.w(TAG, "Failed attempt recorded — failStreak=${newState.failStreak}/20")
+            if (newState.failStreak >= 20) {
                 AppLogger.w(TAG, "=== MAX ATTEMPTS REACHED — WIPING ===")
                 wipeAll()
                 UnlockResult.Wiped
             } else {
-                val remaining = 9 - newState.failStreak
+                val remaining = 20 - newState.failStreak
                 AppLogger.w(TAG, "$remaining attempts remaining before wipe")
                 UnlockResult.WrongPassword(remaining, newState.lockoutUntil)
             }
@@ -173,6 +177,54 @@ class AuthRepository(private val context: Context) {
         authDb.setLocked(true)
         SessionLockManager.lock()
         AppLogger.i(TAG, "=== APP LOCKED ===")
+    }
+
+    /**
+     * Check if biometric unlock has been set up (encrypted password exists).
+     */
+    fun isBiometricSetup(): Boolean = BiometricKeyStore.isBiometricKeySetup(context)
+
+    /**
+     * Enable biometric unlock: encrypt current password with biometric-protected key.
+     * Must be called with an authenticated cipher from BiometricKeyStore.getEncryptCipher()
+     * after biometric prompt succeeds.
+     */
+    fun storeBiometricPassword(cipher: Cipher, password: String) {
+        BiometricKeyStore.storeEncryptedPassword(context, cipher, password)
+        AppLogger.i(TAG, "Biometric unlock enabled")
+    }
+
+    /**
+     * Get cipher needed for encrypting password (before biometric prompt).
+     */
+    fun getBiometricEncryptCipher(): Cipher = BiometricKeyStore.getEncryptCipher()
+
+    /**
+     * Get cipher needed for decrypting stored password (before biometric prompt).
+     */
+    fun getBiometricDecryptCipher(): Cipher? = BiometricKeyStore.getDecryptCipher(context)
+
+    /**
+     * Disable biometric unlock: clear stored keystore key and encrypted password.
+     */
+    fun disableBiometric() {
+        BiometricKeyStore.clear(context)
+        AppLogger.i(TAG, "Biometric unlock disabled")
+    }
+
+    /**
+     * Unlock using biometric: decrypt stored password with authenticated cipher,
+     * then perform normal unlock flow.
+     */
+    suspend fun unlockWithBiometric(cipher: Cipher): UnlockResult = withContext(Dispatchers.IO) {
+        AppLogger.i(TAG, "=== BIOMETRIC UNLOCK ATTEMPT ===")
+        val password = BiometricKeyStore.retrieveDecryptedPassword(context, cipher)
+        if (password == null) {
+            AppLogger.w(TAG, "Failed to decrypt stored password via biometric")
+            return@withContext UnlockResult.WrongPassword(0, null)
+        }
+        AppLogger.i(TAG, "Password decrypted via biometric, proceeding to unlock")
+        unlock(password)
     }
 
     sealed class UnlockResult {

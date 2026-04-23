@@ -8,10 +8,14 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import com.journeyapps.barcodescanner.ScanContract
+import com.journeyapps.barcodescanner.ScanOptions
+import io.raaz.messenger.R
 import io.raaz.messenger.databinding.FragmentAddContactBinding
 import io.raaz.messenger.ui.SharedViewModel
 import io.raaz.messenger.util.LocaleManager
@@ -43,7 +47,6 @@ class AddContactFragment : Fragment() {
         binding.toolbar.setNavigationOnClickListener { findNavController().navigateUp() }
 
         binding.tabLayout.addTab(binding.tabLayout.newTab().setText(getString(io.raaz.messenger.R.string.add_contact_enter_code)))
-        binding.tabLayout.addTab(binding.tabLayout.newTab().setText(getString(io.raaz.messenger.R.string.add_contact_scan_qr)))
         binding.tabLayout.addTab(binding.tabLayout.newTab().setText(getString(io.raaz.messenger.R.string.add_contact_show_my_qr)))
 
         viewModel.myQrBitmap.observe(viewLifecycleOwner) { bitmap ->
@@ -59,23 +62,16 @@ class AddContactFragment : Fragment() {
                         binding.tilCode.show()
                         binding.tilName.show()
                         binding.btnAdd.show()
+                        binding.btnScanQr.show()
                         binding.layoutMyQr.hide()
                         binding.cameraPreview.hide()
                     }
                     1 -> {
-                        // Scan QR code
-                        binding.tilCode.hide()
-                        binding.tilName.hide()
-                        binding.btnAdd.hide()
-                        binding.layoutMyQr.hide()
-                        binding.cameraPreview.show()
-                        startQrScanner()
-                    }
-                    2 -> {
                         // Show my QR
                         binding.tilCode.hide()
                         binding.tilName.hide()
                         binding.btnAdd.hide()
+                        binding.btnScanQr.hide()
                         binding.layoutMyQr.show()
                         binding.cameraPreview.hide()
                         viewModel.loadMyQr()
@@ -114,6 +110,11 @@ class AddContactFragment : Fragment() {
             viewModel.addContactFromCode(code, name)
         }
 
+        // QR Scanner button
+        binding.btnScanQr.setOnClickListener {
+            startQrScanner()
+        }
+
         viewModel.state.observe(viewLifecycleOwner) { state ->
             when (state) {
                 is AddContactViewModel.State.Success -> {
@@ -134,11 +135,23 @@ class AddContactFragment : Fragment() {
         }
     }
 
+    private val qrScannerLauncher = registerForActivityResult(ScanContract()) { result ->
+        if (result.contents != null) {
+            binding.etCode.setText(result.contents)
+            binding.etName.requestFocus()
+        }
+    }
+
     private fun startQrScanner() {
-        // TODO: Implement QR scanner using CameraX
-        // For now, show a toast that this feature is coming
-        toast("QR Scanner - Coming soon")
-        // When QR is scanned, populate the code field and switch back to tab 0
+        val options = ScanOptions().apply {
+            setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+            setPrompt(getString(R.string.add_contact_scan_qr))
+            setBeepEnabled(false)
+            setOrientationLocked(true)  // Lock to portrait — fixes rotation issue
+            setBarcodeImageEnabled(false)
+            setCaptureActivity(io.raaz.messenger.ui.addcontact.QrCaptureActivity::class.java)
+        }
+        qrScannerLauncher.launch(options)
     }
 
     override fun onDestroyView() {

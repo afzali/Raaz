@@ -72,6 +72,33 @@
             <com.google.android.material.divider.MaterialDivider android:layout_width="match_parent"
                 android:layout_height="wrap_content" android:layout_marginVertical="16dp" />
 
+            <!-- Sync interval -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="@string/settings_sync_interval" android:textAppearance="?attr/textAppearanceLabelLarge" />
+            <Spinner android:id="@+id/spinner_sync_interval" android:layout_width="match_parent"
+                android:layout_height="48dp" android:layout_marginTop="8dp" />
+
+            <com.google.android.material.divider.MaterialDivider android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginVertical="16dp" />
+
+            <!-- Biometric unlock -->
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:gravity="center_vertical">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="@string/settings_biometric" android:textAppearance="?attr/textAppearanceBodyLarge" />
+                    <TextView android:id="@+id/tv_biometric_desc" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="@string/settings_biometric_desc" android:textAppearance="?attr/textAppearanceBodySmall"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
+                </LinearLayout>
+                <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switch_biometric"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <com.google.android.material.divider.MaterialDivider android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginVertical="16dp" />
+
             <!-- Server URL -->
             <com.google.android.material.textfield.TextInputLayout android:id="@+id/til_server_url"
                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"

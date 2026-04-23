@@ -52,6 +52,16 @@ class SettingsFragment : Fragment() {
         )
     }
 
+    private val syncIntervalOptions by lazy {
+        listOf(
+            Pair(getString(R.string.settings_sync_5min), 5),
+            Pair(getString(R.string.settings_sync_15min), 15),
+            Pair(getString(R.string.settings_sync_30min), 30),
+            Pair(getString(R.string.settings_sync_1hour), 60),
+            Pair(getString(R.string.settings_sync_disabled), 0)
+        )
+    }
+
     override fun onAttach(context: Context) {
         super.onAttach(LocaleManager.applyLocale(context))
     }
@@ -101,17 +111,23 @@ class SettingsFragment : Fragment() {
         ).apply { setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
         binding.spinnerLockTimeout.adapter = spinnerAdapter
 
+        // Sync interval spinner
+        val syncAdapter = ArrayAdapter(
+            requireContext(),
+            android.R.layout.simple_spinner_item,
+            syncIntervalOptions.map { it.first }
+        ).apply { setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
+        binding.spinnerSyncInterval.adapter = syncAdapter
+
         // Populate fields from DB settings — attach listener only after initial selection is set
         viewModel.settings.observe(viewLifecycleOwner) { settings ->
             settings ?: return@observe
             binding.etServerUrl.setText(settings.serverUrl)
-            val idx = lockTimeoutOptions.indexOfFirst { it.second == settings.lockTimeoutMs }
-
-            // Remove listener while programmatically setting selection to avoid spurious saves
+            
+            // Lock timeout
+            val lockIdx = lockTimeoutOptions.indexOfFirst { it.second == settings.lockTimeoutMs }
             binding.spinnerLockTimeout.onItemSelectedListener = null
-            if (idx >= 0) binding.spinnerLockTimeout.setSelection(idx)
-
-            // Re-attach after the current layout pass so setSelection doesn't trigger it
+            if (lockIdx >= 0) binding.spinnerLockTimeout.setSelection(lockIdx)
             binding.spinnerLockTimeout.post {
                 binding.spinnerLockTimeout.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
                     override fun onItemSelected(parent: android.widget.AdapterView<*>?, v: View?, position: Int, id: Long) {
@@ -119,6 +135,33 @@ class SettingsFragment : Fragment() {
                     }
                     override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
                 }
+            }
+
+            // Sync interval
+            val syncIdx = syncIntervalOptions.indexOfFirst { it.second == settings.syncIntervalMinutes }
+            binding.spinnerSyncInterval.onItemSelectedListener = null
+            if (syncIdx >= 0) binding.spinnerSyncInterval.setSelection(syncIdx)
+            binding.spinnerSyncInterval.post {
+                binding.spinnerSyncInterval.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+                    override fun onItemSelected(parent: android.widget.AdapterView<*>?, v: View?, position: Int, id: Long) {
+                        viewModel.saveSyncInterval(syncIntervalOptions[position].second)
+                    }
+                    override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+                }
+            }
+
+            // Biometric switch
+            binding.switchBiometric.isChecked = settings.biometricEnabled
+        }
+
+        // Biometric switch listener
+        binding.switchBiometric.setOnCheckedChangeListener { btn, isChecked ->
+            if (!btn.isPressed) return@setOnCheckedChangeListener // Ignore programmatic changes
+            if (isChecked) {
+                promptPasswordAndEnableBiometric()
+            } else {
+                viewModel.disableBiometric()
+                toast(getString(R.string.save))
             }
         }
 
@@ -148,6 +191,75 @@ class SettingsFragment : Fragment() {
                 .setNegativeButton(getString(R.string.cancel), null)
                 .show()
         }
+
+        // Check if biometric is available
+        val isBiometricAvailable = io.raaz.messenger.util.BiometricHelper.isAvailable(requireContext())
+        if (!isBiometricAvailable) {
+            binding.switchBiometric.isEnabled = false
+            binding.tvBiometricDesc.text = getString(R.string.biometric_not_available)
+        }
+    }
+
+    private fun promptPasswordAndEnableBiometric() {
+        val input = android.widget.EditText(requireContext()).apply {
+            hint = getString(R.string.lock_enter_password)
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+            setPadding(48, 24, 48, 24)
+        }
+        AlertDialog.Builder(requireContext())
+            .setTitle(getString(R.string.settings_biometric))
+            .setMessage(getString(R.string.biometric_enable_password_prompt))
+            .setView(input)
+            .setPositiveButton(R.string.ok) { _, _ ->
+                val password = input.text?.toString() ?: ""
+                if (password.isBlank()) {
+                    binding.switchBiometric.isChecked = false
+                    return@setPositiveButton
+                }
+                authenticateAndStorePassword(password)
+            }
+            .setNegativeButton(R.string.cancel) { _, _ ->
+                binding.switchBiometric.isChecked = false
+            }
+            .setOnCancelListener {
+                binding.switchBiometric.isChecked = false
+            }
+            .show()
+    }
+
+    private fun authenticateAndStorePassword(password: String) {
+        val cipher = try {
+            viewModel.getBiometricEncryptCipher()
+        } catch (e: Exception) {
+            toast(getString(R.string.biometric_not_available))
+            binding.switchBiometric.isChecked = false
+            return
+        }
+
+        io.raaz.messenger.util.BiometricHelper.showBiometricPrompt(
+            activity = requireActivity(),
+            cipher = cipher,
+            onSuccess = { authenticatedCipher ->
+                if (authenticatedCipher != null) {
+                    val ok = viewModel.enableBiometric(authenticatedCipher, password)
+                    if (ok) {
+                        toast(getString(R.string.save))
+                    } else {
+                        toast(getString(R.string.error_unknown))
+                        binding.switchBiometric.isChecked = false
+                    }
+                } else {
+                    binding.switchBiometric.isChecked = false
+                }
+            },
+            onError = { error ->
+                toast(error)
+                binding.switchBiometric.isChecked = false
+            },
+            onCancel = {
+                binding.switchBiometric.isChecked = false
+            }
+        )
     }
 
     private fun hasNotificationPermission(): Boolean =

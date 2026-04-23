@@ -84,7 +84,21 @@ class AuthDatabase private constructor(context: Context, key: ByteArray) :
         val now = System.currentTimeMillis()
         val current = getLockState()
         val newStreak = current.failStreak + 1
-        val lockoutUntil: Long? = if (newStreak in 3..8) now + 30 * 60 * 1000L else null
+
+        // Progressive lockout:
+        //   1-7 attempts: no lockout (free retry)
+        //   8-10: 1 minute lockout
+        //   11-14: 5 minute lockout
+        //   15-19: 15 minute lockout
+        //   20+: wipe
+        val lockoutMs: Long? = when (newStreak) {
+            in 0..7 -> null
+            in 8..10 -> 1 * 60 * 1000L
+            in 11..14 -> 5 * 60 * 1000L
+            in 15..19 -> 15 * 60 * 1000L
+            else -> null
+        }
+        val lockoutUntil: Long? = lockoutMs?.let { now + it }
 
         val cv = ContentValues().apply {
             put("is_locked", 1)
@@ -167,7 +181,7 @@ class AuthDatabase private constructor(context: Context, key: ByteArray) :
 
     fun clearLogs() { db.delete("app_logs", null, null) }
 
-    fun shouldWipe(): Boolean = getLockState().failStreak >= 9
+    fun shouldWipe(): Boolean = getLockState().failStreak >= 20
 
     companion object {
         private const val TAG = "AuthDB"

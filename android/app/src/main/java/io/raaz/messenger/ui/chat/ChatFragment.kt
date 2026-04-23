@@ -179,10 +179,10 @@ class ChatFragment : Fragment() {
     private fun showClearHistoryDialog() {
         AlertDialog.Builder(requireContext())
             .setTitle(R.string.chat_clear_history)
-            .setMessage("آیا مطمئن هستید؟ تمام پیام‌ها حذف می‌شوند.")
+            .setMessage(R.string.chat_clear_history_confirm)
             .setPositiveButton(R.string.delete) { _, _ ->
                 viewModel.clearHistory()
-                toast("تاریخچه پاک شد")
+                toast(getString(R.string.chat_history_cleared))
             }
             .setNegativeButton(R.string.cancel, null)
             .show()
@@ -191,10 +191,10 @@ class ChatFragment : Fragment() {
     private fun showSessionInfoDialog() {
         val session = viewModel.session.value
         val info = buildString {
-            appendLine("شناسه گفتگو: ${session?.id?.take(8)}...")
-            appendLine("شناسه مخاطب: ${session?.contactId?.take(8)}...")
-            appendLine("نام: ${session?.contactName}")
-            appendLine("کلید عمومی: ${session?.contactPublicKey?.take(20)}...")
+            appendLine(getString(R.string.session_info_session_id, session?.id?.take(8) ?: "-"))
+            appendLine(getString(R.string.session_info_contact_id, session?.contactId?.take(8) ?: "-"))
+            appendLine(getString(R.string.session_info_name, session?.contactName ?: "-"))
+            appendLine(getString(R.string.session_info_public_key, session?.contactPublicKey?.take(20) ?: "-"))
         }
         AlertDialog.Builder(requireContext())
             .setTitle(R.string.chat_session_info)
@@ -206,7 +206,7 @@ class ChatFragment : Fragment() {
     private fun showDeleteContactDialog() {
         AlertDialog.Builder(requireContext())
             .setTitle(R.string.chat_delete_contact)
-            .setMessage("آیا مطمئن هستید؟ این مخاطب و تمام پیام‌ها حذف می‌شوند.")
+            .setMessage(R.string.chat_delete_contact_confirm)
             .setPositiveButton(R.string.delete) { _, _ ->
                 viewModel.deleteContact()
                 findNavController().navigateUp()

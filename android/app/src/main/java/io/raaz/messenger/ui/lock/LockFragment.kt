@@ -12,6 +12,7 @@ import androidx.navigation.fragment.findNavController
 import io.raaz.messenger.R
 import io.raaz.messenger.databinding.FragmentLockBinding
 import io.raaz.messenger.ui.SharedViewModel
+import io.raaz.messenger.util.BiometricHelper
 import io.raaz.messenger.util.DateFormatter
 import io.raaz.messenger.util.LocaleManager
 import io.raaz.messenger.util.hide
@@ -51,9 +52,55 @@ class LockFragment : Fragment() {
             true
         }
 
+        // Biometric button
+        binding.btnBiometric?.setOnClickListener {
+            showBiometricPrompt()
+        }
+
+        updateBiometricButton()
+
         viewModel.state.observe(viewLifecycleOwner) { state ->
             handleState(state)
         }
+
+        // Auto-prompt biometric if setup and available — deferred to avoid FragmentManager conflict
+        if (viewModel.isBiometricSetup() && BiometricHelper.isAvailable(requireContext())) {
+            view.post { showBiometricPrompt() }
+        }
+    }
+
+    private fun updateBiometricButton() {
+        // Show button only when biometric is available AND has been set up (encrypted password exists)
+        val isAvailable = BiometricHelper.isAvailable(requireContext())
+        val isSetup = viewModel.isBiometricSetup()
+        binding.btnBiometric?.visibility = if (isAvailable && isSetup) View.VISIBLE else View.GONE
+    }
+
+    private fun showBiometricPrompt() {
+        if (!BiometricHelper.isAvailable(requireContext())) return
+        if (!viewModel.isBiometricSetup()) return
+
+        val cipher = viewModel.getBiometricDecryptCipher()
+        if (cipher == null) {
+            binding.tvError.text = getString(R.string.biometric_not_available)
+            binding.tvError.show()
+            return
+        }
+
+        BiometricHelper.showBiometricPrompt(
+            activity = requireActivity(),
+            cipher = cipher,
+            onSuccess = { authenticatedCipher ->
+                if (authenticatedCipher != null) {
+                    viewModel.unlockWithBiometric(authenticatedCipher)
+                }
+            },
+            onError = { error ->
+                binding.tvError.text = error
+                binding.tvError.show()
+            },
+            onCancel = { }
+        )
     }
 
     private fun handleState(state: LockViewModel.LockState) {

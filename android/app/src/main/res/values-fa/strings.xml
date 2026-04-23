@@ -5,6 +5,12 @@
     <!-- Lock screen -->
     <string name="lock_title">راز</string>
     <string name="lock_subtitle">پیام‌رسان امن</string>
+    <string name="unlock_pass">رمز عبور</string>
+    <string name="unlock_btn">باز کردن</string>
+    <string name="unlock_biometric">استفاده از اثر انگشت</string>
+    <string name="biometric_title">باز کردن Raaz</string>
+    <string name="biometric_subtitle">هویت خود را تأیید کنید</string>
+    <string name="use_password">استفاده از رمز عبور</string>
     <string name="lock_enter_password">رمز عبور را وارد کنید</string>
     <string name="lock_wrong_password">رمز عبور اشتباه است</string>
     <string name="lock_attempts_remaining">%d تلاش باقی مانده</string>
@@ -43,6 +49,13 @@
     <string name="chat_clear_history">پاک کردن تاریخچه</string>
     <string name="chat_rename">تغییر نام گفتگو</string>
     <string name="chat_delete_contact">حذف مخاطب</string>
+    <string name="chat_clear_history_confirm">آیا مطمئن هستید؟ تمام پیام‌ها حذف می‌شوند.</string>
+    <string name="chat_history_cleared">تاریخچه پاک شد</string>
+    <string name="chat_delete_contact_confirm">آیا مطمئن هستید؟ این مخاطب و تمام پیام‌ها حذف می‌شوند.</string>
+    <string name="session_info_session_id">شناسه گفتگو: %1$s…</string>
+    <string name="session_info_contact_id">شناسه مخاطب: %1$s…</string>
+    <string name="session_info_name">نام: %1$s</string>
+    <string name="session_info_public_key">کلید عمومی: %1$s…</string>
 
     <!-- Add contact -->
     <string name="add_contact_title">افزودن مخاطب</string>
@@ -71,6 +84,16 @@
     <string name="settings_lock_never">هرگز</string>
     <string name="settings_notifications">اعلان‌ها</string>
     <string name="settings_notifications_desc">نمایش اعلان هنگام دریافت پیام</string>
+    <string name="settings_sync_interval">بازه زمانی همگام‌سازی پس‌زمینه</string>
+    <string name="settings_sync_5min">۵ دقیقه</string>
+    <string name="settings_sync_15min">۱۵ دقیقه</string>
+    <string name="settings_sync_30min">۳۰ دقیقه</string>
+    <string name="settings_sync_1hour">۱ ساعت</string>
+    <string name="settings_sync_disabled">غیرفعال (فقط هنگام باز شدن برنامه)</string>
+    <string name="settings_biometric">بازگشایی با اثر انگشت</string>
+    <string name="settings_biometric_desc">استفاده از اثر انگشت یا چهره برای باز کردن برنامه</string>
+    <string name="biometric_not_available">احراز هویت بیومتریک در این دستگاه در دسترس نیست</string>
+    <string name="biometric_enable_password_prompt">برای فعال کردن ورود با اثر انگشت رمز عبور خود را وارد کنید</string>
     <string name="settings_server_url">آدرس سرور</string>
     <string name="settings_change_password">تغییر رمز عبور</string>
     <string name="settings_danger_zone">منطقه خطر</string>
@@ -107,7 +130,7 @@
     <string name="notif_unknown_sender_body">کسی برای شما پیام فرستاده. او را به مخاطبین اضافه کنید تا پیام را بخوانید.</string>
 
     <!-- Common -->
-    <string name="ok">باشه</string>
+    <string name="ok">تایید</string>
     <string name="cancel">لغو</string>
     <string name="save">ذخیره</string>
     <string name="delete">حذف</string>

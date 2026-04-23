@@ -44,6 +44,13 @@
     <string name="chat_delete_contact">Delete contact</string>
     <string name="chat_session_info">Session info</string>
     <string name="chat_clear_history">Clear history</string>
+    <string name="chat_clear_history_confirm">Are you sure? All messages will be deleted.</string>
+    <string name="chat_history_cleared">History cleared</string>
+    <string name="chat_delete_contact_confirm">Are you sure? This contact and all messages will be deleted.</string>
+    <string name="session_info_session_id">Session ID: %1$s…</string>
+    <string name="session_info_contact_id">Contact ID: %1$s…</string>
+    <string name="session_info_name">Name: %1$s</string>
+    <string name="session_info_public_key">Public key: %1$s…</string>
 
     <!-- Add contact -->
     <string name="add_contact_title">Add contact</string>
@@ -51,7 +58,7 @@
     <string name="add_contact_enter_code">Enter invite code</string>
     <string name="add_contact_show_my_qr">My QR code</string>
     <string name="add_contact_code_hint">Paste invite code here</string>
-    <string name="add_contact_add">Add</string>
+    <string name="add_contact_add">Add Contact</string>
     <string name="add_contact_invalid_code">Invalid invite code</string>
     <string name="add_contact_added">Contact added</string>
     <string name="add_contact_my_invite_code">My invite code</string>
@@ -72,6 +79,16 @@
     <string name="settings_lock_never">Never</string>
     <string name="settings_notifications">Notifications</string>
     <string name="settings_notifications_desc">Show notification when messages arrive</string>
+    <string name="settings_sync_interval">Background sync interval</string>
+    <string name="settings_sync_5min">5 minutes</string>
+    <string name="settings_sync_15min">15 minutes</string>
+    <string name="settings_sync_30min">30 minutes</string>
+    <string name="settings_sync_1hour">1 hour</string>
+    <string name="settings_sync_disabled">Disabled (sync on app open only)</string>
+    <string name="settings_biometric">Biometric unlock</string>
+    <string name="settings_biometric_desc">Use fingerprint or face unlock to open app</string>
+    <string name="biometric_not_available">Biometric authentication not available on this device</string>
+    <string name="biometric_enable_password_prompt">Enter your password to enable biometric unlock</string>
     <string name="settings_server_url">Server URL</string>
     <string name="settings_change_password">Change password</string>
     <string name="settings_danger_zone">Danger zone</string>
@@ -112,6 +129,12 @@
     <string name="cancel">Cancel</string>
     <string name="save">Save</string>
     <string name="delete">Delete</string>
+    <string name="unlock_pass">Password</string>
+    <string name="unlock_btn">Unlock</string>
+    <string name="unlock_biometric">Use fingerprint</string>
+    <string name="biometric_title">Unlock Raaz</string>
+    <string name="biometric_subtitle">Verify your identity</string>
+    <string name="use_password">Use password</string>
     <string name="copy">Copy</string>
     <string name="share">Share</string>
     <string name="error_network">Network error. Please try again.</string>

@@ -56,6 +56,7 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
                     val currentDb = db ?: return@withContext
                     val dao = SettingsDao(currentDb.db)
                     dao.updateServerUrl(trimmedUrl)
+                    RaazPreferences(getApplication()).serverUrl = trimmedUrl  // cache for background workers
                     AppLogger.i(TAG, "Server URL updated to: $trimmedUrl — re-registering device...")
 
                     // Re-register with new server so we get a fresh token
@@ -103,6 +104,61 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
                 _saved.postValue(true)
             } catch (e: Exception) {
                 AppLogger.e(TAG, "Failed to save lock timeout: ${e.message}", e)
+            }
+        }
+    }
+
+    fun saveSyncInterval(minutes: Int) {
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    db?.let { SettingsDao(it.db).updateSyncInterval(minutes) }
+                }
+                _saved.postValue(true)
+                // Reschedule sync worker with new interval
+                if (minutes > 0) {
+                    io.raaz.messenger.worker.SyncWorker.schedule(getApplication(), minutes)
+                }
+            } catch (e: Exception) {
+                AppLogger.e(TAG, "Failed to save sync interval: ${e.message}", e)
+            }
+        }
+    }
+
+    private val authRepo by lazy { io.raaz.messenger.data.repository.AuthRepository(getApplication()) }
+
+    fun getBiometricEncryptCipher(): javax.crypto.Cipher = authRepo.getBiometricEncryptCipher()
+
+    /**
+     * Enable biometric: encrypt password with authenticated cipher and mark in DB.
+     * Runs synchronously for UI to get result.
+     */
+    fun enableBiometric(authenticatedCipher: javax.crypto.Cipher, password: String): Boolean {
+        return try {
+            authRepo.storeBiometricPassword(authenticatedCipher, password)
+            // Mark in DB as well
+            viewModelScope.launch {
+                withContext(Dispatchers.IO) {
+                    db?.let { SettingsDao(it.db).updateBiometricEnabled(true) }
+                }
+            }
+            true
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Failed to enable biometric: ${e.message}", e)
+            false
+        }
+    }
+
+    fun disableBiometric() {
+        authRepo.disableBiometric()
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    db?.let { SettingsDao(it.db).updateBiometricEnabled(false) }
+                }
+                _saved.postValue(true)
+            } catch (e: Exception) {
+                AppLogger.e(TAG, "Failed to disable biometric: ${e.message}", e)
             }
         }
     }

@@ -90,6 +90,9 @@ class RaazDatabase private constructor(context: Context, key: ByteArray) :
                 server_url TEXT NOT NULL DEFAULT 'http://relay.rahejanan.ir',
                 notif_enabled INTEGER NOT NULL DEFAULT 1,
                 setup_complete INTEGER NOT NULL DEFAULT 0,
+                sync_interval_minutes INTEGER NOT NULL DEFAULT 15,
+                sync_enabled INTEGER NOT NULL DEFAULT 1,
+                biometric_enabled INTEGER NOT NULL DEFAULT 0,
                 user_id TEXT,
                 device_id TEXT,
                 public_key TEXT,
@@ -121,12 +124,19 @@ class RaazDatabase private constructor(context: Context, key: ByteArray) :
             db.execSQL("CREATE INDEX IF NOT EXISTS idx_pending_sender ON pending_messages(sender_device_id)")
             AppLogger.i(TAG, "Added pending_messages table (v2)")
         }
+        if (oldVersion < 3) {
+            // Add sync and biometric columns in v3
+            db.execSQL("ALTER TABLE app_settings ADD COLUMN sync_interval_minutes INTEGER NOT NULL DEFAULT 15")
+            db.execSQL("ALTER TABLE app_settings ADD COLUMN sync_enabled INTEGER NOT NULL DEFAULT 1")
+            db.execSQL("ALTER TABLE app_settings ADD COLUMN biometric_enabled INTEGER NOT NULL DEFAULT 0")
+            AppLogger.i(TAG, "Added sync_interval, sync_enabled, biometric_enabled columns (v3)")
+        }
     }
 
     companion object {
         private const val TAG = "RaazDB"
         const val DB_NAME = "raaz_main.db"
-        private const val DB_VERSION = 2
+        private const val DB_VERSION = 3
 
         @Volatile private var instance: RaazDatabase? = null
 

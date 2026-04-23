@@ -35,7 +35,12 @@ class SetupFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.etServerUrl.setText(getString(R.string.setup_server_url_hint))
+        // Set hint (placeholder) not the actual text value
+        binding.etServerUrl.hint = getString(R.string.setup_server_url_hint)
+        // Set default value from hint if empty
+        if (binding.etServerUrl.text.isNullOrBlank()) {
+            binding.etServerUrl.setText(getString(R.string.setup_server_url_hint))
+        }
 
         binding.btnTestConnection.setOnClickListener {
             val url = binding.etServerUrl.text?.toString() ?: ""

@@ -7,7 +7,7 @@
 // 'cpanel'    = هاست اشتراکی (cPanel، خارج از public_html)
 // 'subdomain' = ساب‌دامین مستقل (مثل api.raaz.app)
 // ───────────────────────────────────────────────────────────────────────────
-$RAAZ_ENV = 'xampp';  // ←←← اینجا را دستی تغییر بده
+$RAAZ_ENV = 'subdomain';  // ←←← اینجا را دستی تغییر بده
 
 // ─── Environment detection ─────────────────────────────────────────────────
 // XAMPP (Windows): db lives inside htdocs/raaz/  — writable, for dev only

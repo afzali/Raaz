@@ -39,8 +39,8 @@ class AuthRepository(private val context: Context) {
             AppLogger.i(TAG, "Identity keypair generated — userId=$userId, deviceId=$deviceId")
             AppLogger.d(TAG, "PublicKey(first12): ${publicKeyB64.take(12)}...")
 
-            settingsDao.markSetupComplete(userId, deviceId, publicKeyB64, privateKeyB64)
-            AppLogger.i(TAG, "Settings saved to DB")
+            settingsDao.markSetupComplete(userId, deviceId, publicKeyB64, privateKeyB64, serverUrl)
+            AppLogger.i(TAG, "Settings saved to DB (serverUrl=$serverUrl)")
 
             CryptoManager.loadKeys(privateKeyB64, publicKeyB64)
             AppLogger.i(TAG, "Keys loaded into CryptoManager")
@@ -112,11 +112,13 @@ class AuthRepository(private val context: Context) {
 
             // Re-register if no token (e.g. first launch, server changed, app reinstall)
             val prefs = RaazPreferences(context)
+            val savedServerUrl = settings.serverUrl
+            AppLogger.i(TAG, "Loaded saved server URL: $savedServerUrl")
             if (prefs.bearerToken == null && settings.userId != null && settings.publicKey != null) {
                 val userId = settings.userId
                 val deviceId = settings.deviceId ?: prefs.deviceId
                 val publicKey = settings.publicKey
-                AppLogger.w(TAG, "No bearer token — attempting re-registration with ${settings.serverUrl}")
+                AppLogger.w(TAG, "No bearer token — attempting re-registration with $savedServerUrl")
                 try {
                     val api = RaazApiService.get(settings.serverUrl)
                     val resp = api.registerDevice(RegisterDeviceRequest(userId!!, deviceId!!, publicKey!!))

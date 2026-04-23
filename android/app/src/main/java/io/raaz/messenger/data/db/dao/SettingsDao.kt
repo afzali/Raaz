@@ -58,13 +58,14 @@ class SettingsDao(private val db: SQLiteDatabase) {
         db.update("app_settings", cv, "id=1", null)
     }
 
-    fun markSetupComplete(userId: String, deviceId: String, publicKey: String, privateKeyEnc: String) {
+    fun markSetupComplete(userId: String, deviceId: String, publicKey: String, privateKeyEnc: String, serverUrl: String) {
         val cv = ContentValues().apply {
             put("setup_complete", 1)
             put("user_id", userId)
             put("device_id", deviceId)
             put("public_key", publicKey)
             put("private_key_encrypted", privateKeyEnc)
+            put("server_url", serverUrl)
         }
         db.update("app_settings", cv, "id=1", null)
     }

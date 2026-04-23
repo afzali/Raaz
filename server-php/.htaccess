@@ -1,6 +1,6 @@
 Options -Indexes
 RewriteEngine On
-RewriteBase /raaz/
+RewriteBase /
 
 # Pass Authorization header to PHP (CGI/FastCGI fix)
 RewriteCond %{HTTP:Authorization} ^(.*)

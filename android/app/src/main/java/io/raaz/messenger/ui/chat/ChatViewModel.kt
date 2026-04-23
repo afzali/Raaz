@@ -202,4 +202,34 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             }
         }
     }
+
+    fun clearHistory() {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                try {
+                    val currentDb = db ?: return@withContext
+                    MessageDao(currentDb.db).deleteBySession(sessionId)
+                    AppLogger.i(TAG, "History cleared for session ${sessionId.take(8)}...")
+                    reloadMessages()
+                } catch (e: Exception) {
+                    AppLogger.e(TAG, "Clear history failed: ${e.message}", e)
+                }
+            }
+        }
+    }
+
+    fun deleteContact() {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                try {
+                    val currentDb = db ?: return@withContext
+                    // Delete contact (cascade will delete session and messages)
+                    ContactDao(currentDb.db).delete(contactId)
+                    AppLogger.i(TAG, "Contact deleted: ${contactId.take(8)}...")
+                } catch (e: Exception) {
+                    AppLogger.e(TAG, "Delete contact failed: ${e.message}", e)
+                }
+            }
+        }
+    }
 }

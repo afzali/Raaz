@@ -54,7 +54,18 @@ class ChatFragment : Fragment() {
             when (item.itemId) {
                 R.id.action_rename -> { showRenameDialog(); true }
                 R.id.action_rekey  -> { showRekeyDialog(); true }
+                R.id.action_clear_history -> { showClearHistoryDialog(); true }
+                R.id.action_session_info -> { showSessionInfoDialog(); true }
+                R.id.action_delete_contact -> { showDeleteContactDialog(); true }
                 else -> false
+            }
+        }
+
+        // Fix RTL back arrow rotation for Persian
+        if (LocaleManager.getLanguage(requireContext()) == LocaleManager.LANG_FA) {
+            binding.toolbar.navigationIcon?.let { icon ->
+                // Mirror the back arrow for RTL
+                icon.setAutoMirrored(true)
             }
         }
 
@@ -162,6 +173,45 @@ class ChatFragment : Fragment() {
                 if (code.isNotBlank()) viewModel.rekeyContact(code)
             }
             .setNegativeButton(getString(R.string.cancel), null)
+            .show()
+    }
+
+    private fun showClearHistoryDialog() {
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.chat_clear_history)
+            .setMessage("آیا مطمئن هستید؟ تمام پیام‌ها حذف می‌شوند.")
+            .setPositiveButton(R.string.delete) { _, _ ->
+                viewModel.clearHistory()
+                toast("تاریخچه پاک شد")
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun showSessionInfoDialog() {
+        val session = viewModel.session.value
+        val info = buildString {
+            appendLine("شناسه گفتگو: ${session?.id?.take(8)}...")
+            appendLine("شناسه مخاطب: ${session?.contactId?.take(8)}...")
+            appendLine("نام: ${session?.contactName}")
+            appendLine("کلید عمومی: ${session?.contactPublicKey?.take(20)}...")
+        }
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.chat_session_info)
+            .setMessage(info)
+            .setPositiveButton(R.string.ok, null)
+            .show()
+    }
+
+    private fun showDeleteContactDialog() {
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.chat_delete_contact)
+            .setMessage("آیا مطمئن هستید؟ این مخاطب و تمام پیام‌ها حذف می‌شوند.")
+            .setPositiveButton(R.string.delete) { _, _ ->
+                viewModel.deleteContact()
+                findNavController().navigateUp()
+            }
+            .setNegativeButton(R.string.cancel, null)
             .show()
     }
 

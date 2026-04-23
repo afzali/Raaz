@@ -41,6 +41,8 @@
     <string name="chat_message_expired">پیام منقضی شد</string>
     <string name="chat_session_info">اطلاعات گفتگو</string>
     <string name="chat_clear_history">پاک کردن تاریخچه</string>
+    <string name="chat_rename">تغییر نام گفتگو</string>
+    <string name="chat_delete_contact">حذف مخاطب</string>
 
     <!-- Add contact -->
     <string name="add_contact_title">افزودن مخاطب</string>

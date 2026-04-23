@@ -43,6 +43,7 @@ class AddContactFragment : Fragment() {
         binding.toolbar.setNavigationOnClickListener { findNavController().navigateUp() }
 
         binding.tabLayout.addTab(binding.tabLayout.newTab().setText(getString(io.raaz.messenger.R.string.add_contact_enter_code)))
+        binding.tabLayout.addTab(binding.tabLayout.newTab().setText(getString(io.raaz.messenger.R.string.add_contact_scan_qr)))
         binding.tabLayout.addTab(binding.tabLayout.newTab().setText(getString(io.raaz.messenger.R.string.add_contact_show_my_qr)))
 
         viewModel.myQrBitmap.observe(viewLifecycleOwner) { bitmap ->
@@ -54,6 +55,7 @@ class AddContactFragment : Fragment() {
             override fun onTabSelected(tab: com.google.android.material.tabs.TabLayout.Tab) {
                 when (tab.position) {
                     0 -> {
+                        // Enter code manually
                         binding.tilCode.show()
                         binding.tilName.show()
                         binding.btnAdd.show()
@@ -61,6 +63,16 @@ class AddContactFragment : Fragment() {
                         binding.cameraPreview.hide()
                     }
                     1 -> {
+                        // Scan QR code
+                        binding.tilCode.hide()
+                        binding.tilName.hide()
+                        binding.btnAdd.hide()
+                        binding.layoutMyQr.hide()
+                        binding.cameraPreview.show()
+                        startQrScanner()
+                    }
+                    2 -> {
+                        // Show my QR
                         binding.tilCode.hide()
                         binding.tilName.hide()
                         binding.btnAdd.hide()
@@ -120,6 +132,13 @@ class AddContactFragment : Fragment() {
                 else -> binding.tvError.hide()
             }
         }
+    }
+
+    private fun startQrScanner() {
+        // TODO: Implement QR scanner using CameraX
+        // For now, show a toast that this feature is coming
+        toast("QR Scanner - Coming soon")
+        // When QR is scanned, populate the code field and switch back to tab 0
     }
 
     override fun onDestroyView() {

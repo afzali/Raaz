@@ -17,4 +17,8 @@
         android:id="@+id/action_session_info"
         android:title="@string/chat_session_info"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/action_delete_contact"
+        android:title="@string/chat_delete_contact"
+        app:showAsAction="never" />
 </menu>

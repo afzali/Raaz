@@ -41,6 +41,7 @@
     <string name="chat_message_expired">Message expired</string>
     <string name="chat_rename">Rename chat</string>
     <string name="chat_rename_hint">Chat name</string>
+    <string name="chat_delete_contact">Delete contact</string>
     <string name="chat_session_info">Session info</string>
     <string name="chat_clear_history">Clear history</string>
 

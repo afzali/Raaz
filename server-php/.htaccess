@@ -1,6 +1,10 @@
 Options -Indexes
 RewriteEngine On
-RewriteBase /
+RewriteBase /raaz/
+
+# NOTE: If running in XAMPP subdirectory, manually set RewriteBase above
+# Example: RewriteBase /raaz/
+# default RewriteBase /
 
 # Block direct access to DB and src/
 RewriteRule ^(raaz_server\.db|src/) - [F,L]

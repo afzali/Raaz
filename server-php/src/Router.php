@@ -19,7 +19,18 @@ class Router {
     public function dispatch(): void {
         $method = $_SERVER['REQUEST_METHOD'];
         $uri    = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-        $uri    = '/' . trim($uri, '/');
+        
+        // XAMPP subdirectory: strip the subfolder path from URI
+        $config = require __DIR__ . '/../config.php';
+        if ($config['env'] === 'xampp') {
+            $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
+            $scriptDir  = dirname($scriptName);
+            if ($scriptDir !== '/' && str_starts_with($uri, $scriptDir)) {
+                $uri = substr($uri, strlen($scriptDir));
+            }
+        }
+        
+        $uri = '/' . trim($uri, '/');
 
         foreach ($this->routes as $route) {
             $pattern = $this->toRegex($route['pattern']);

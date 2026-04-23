@@ -47,10 +47,15 @@ class Database {
             PRIMARY KEY (message_id, sender_device)
         )");
         $db->exec("CREATE INDEX IF NOT EXISTS idx_receipts_sender ON receipts(sender_device)");
+
+        // File transfer tables (migrated lazily — safe to run on existing DBs)
+        FileHandler::migrate($db);
     }
 
-    public static function cleanupExpired(PDO $db): void {
-        $stmt = $db->prepare("DELETE FROM messages WHERE expires_at < ?");
-        $stmt->execute([time()]);
+    public static function cleanupExpired(PDO $db, string $storageDir = ''): void {
+        $db->prepare("DELETE FROM messages WHERE expires_at < ?")->execute([time()]);
+        if ($storageDir) {
+            FileHandler::cleanupExpired($db, $storageDir);
+        }
     }
 }

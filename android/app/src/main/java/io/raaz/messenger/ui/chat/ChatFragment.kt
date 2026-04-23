@@ -22,7 +22,6 @@ import io.raaz.messenger.util.ForegroundSyncManager
 import io.raaz.messenger.util.LocaleManager
 import io.raaz.messenger.util.hideKeyboard
 import io.raaz.messenger.util.toast
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 
@@ -103,7 +102,6 @@ class ChatFragment : Fragment() {
         // Reload messages whenever a background sync finishes
         viewLifecycleOwner.lifecycleScope.launch {
             ForegroundSyncManager.isSyncing
-                .distinctUntilChanged()
                 .filter { syncing -> !syncing }
                 .collect { viewModel.reloadMessages() }
         }

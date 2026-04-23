@@ -2,6 +2,10 @@ Options -Indexes
 RewriteEngine On
 RewriteBase /raaz/
 
+# Pass Authorization header to PHP (CGI/FastCGI fix)
+RewriteCond %{HTTP:Authorization} ^(.*)
+RewriteRule .* - [e=HTTP_AUTHORIZATION:%1]
+
 # NOTE: If running in XAMPP subdirectory, manually set RewriteBase above
 # Example: RewriteBase /raaz/
 # default RewriteBase /

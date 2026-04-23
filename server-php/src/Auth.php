@@ -3,6 +3,18 @@
 class Auth {
     public static function requireDevice(PDO $db): array {
         $header = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+        
+        // Fallback for CGI/FastCGI where Authorization header may not be in $_SERVER
+        if (empty($header) && function_exists('getallheaders')) {
+            $headers = getallheaders();
+            $header = $headers['Authorization'] ?? '';
+        }
+        
+        // Another fallback for Apache mod_rewrite environments
+        if (empty($header)) {
+            $header = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
+        }
+        
         // Compatible with PHP 7.4+
         if (strncmp($header, 'Bearer ', 7) !== 0) {
             http_response_code(401);

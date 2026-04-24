@@ -16,7 +16,12 @@ class SessionDao(private val db: SQLiteDatabase) {
             SELECT s.id, s.contact_id, s.created_at, s.last_message_at,
                    s.message_ttl_ms, s.sensitivity, s.notif_behavior,
                    c.display_name, c.public_key, c.device_id,
-                   (SELECT plaintext_cache FROM messages WHERE session_id=s.id ORDER BY created_at DESC LIMIT 1) as preview,
+                   (SELECT CASE
+                        WHEN media_type = 2 THEN '🎤 Voice message'
+                        WHEN media_type = 3 THEN '📎 ' || COALESCE(file_name, 'File')
+                        WHEN media_type = 1 THEN '🖼 Image'
+                        ELSE plaintext_cache
+                    END FROM messages WHERE session_id=s.id ORDER BY created_at DESC LIMIT 1) as preview,
                    (SELECT COUNT(*) FROM messages WHERE session_id=s.id AND direction=1 AND status < 3) as unread
             FROM sessions s
             LEFT JOIN contacts c ON s.contact_id = c.id

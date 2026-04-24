@@ -3,4 +3,5 @@
     <cache-path name="qr_codes" path="qr/" />
     <files-path name="raaz_files" path="raaz_files/" />
     <cache-path name="voice_recordings" path="voice_recordings/" />
+    <cache-path name="attach_outgoing" path="attach_outgoing/" />
 </paths>

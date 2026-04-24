@@ -34,21 +34,6 @@ android {
         }
     }
 
-    // برای تست دو دستگاه روی یک گوشی
-    flavorDimensions += "device"
-    productFlavors {
-        deviceA {
-            dimension = "device"
-            applicationIdSuffix ".a"
-            resValue "string", "app_name", "Raaz"
-        }
-        deviceB {
-            dimension = "device"
-            applicationIdSuffix ".b"
-            resValue "string", "app_name", "Raaz"
-        }
-    }
-
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17

@@ -254,17 +254,40 @@ class MessageRepository(
         var moved = 0
         for (p in pending) {
             try {
-                val msg = Message(
-                    id = p.serverMsgId,
-                    sessionId = sessionId,
-                    direction = Message.DIR_INCOMING,
-                    ciphertext = p.ciphertext,
-                    plaintextCache = p.plaintextCache,
-                    status = Message.STATUS_DELIVERED,  // Mark as delivered
-                    createdAt = p.createdAt,
-                    expiresAt = p.expiresAt,
-                    serverMsgId = p.serverMsgId
-                )
+                // Detect file envelope — same logic as processIncoming
+                val envelope = tryParseFileEnvelope(p.plaintextCache ?: "")
+                val msg = if (envelope != null) {
+                    AppLogger.i(TAG, "Pending message is a file envelope (type=${envelope.type}, size=${envelope.size}B)")
+                    Message(
+                        id = p.serverMsgId,
+                        sessionId = sessionId,
+                        direction = Message.DIR_INCOMING,
+                        ciphertext = p.ciphertext,
+                        plaintextCache = p.plaintextCache,
+                        status = Message.STATUS_DELIVERED,
+                        createdAt = p.createdAt,
+                        expiresAt = p.expiresAt,
+                        serverMsgId = p.serverMsgId,
+                        mediaType = FileTransferRepository.mediaTypeFromEnvelopeType(envelope.type),
+                        fileId = envelope.fileId,
+                        fileName = envelope.name,
+                        fileSize = envelope.size,
+                        mimeType = envelope.mime,
+                        durationMs = envelope.durationMs
+                    )
+                } else {
+                    Message(
+                        id = p.serverMsgId,
+                        sessionId = sessionId,
+                        direction = Message.DIR_INCOMING,
+                        ciphertext = p.ciphertext,
+                        plaintextCache = p.plaintextCache,
+                        status = Message.STATUS_DELIVERED,
+                        createdAt = p.createdAt,
+                        expiresAt = p.expiresAt,
+                        serverMsgId = p.serverMsgId
+                    )
+                }
                 messageDao.insert(msg)
                 moved++
             } catch (e: Exception) {

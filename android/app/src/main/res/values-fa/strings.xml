@@ -176,6 +176,8 @@
     <string name="chat_file_tap_open">برای باز کردن ضربه بزنید</string>
     <string name="chat_file_cannot_open">برنامه‌ای برای باز کردن این فایل نیست</string>
     <string name="chat_file_failed">انتقال ناموفق بود</string>
+    <string name="chat_retrying">در حال تلاش مجدد…</string>
+    <string name="chat_send_failed">ارسال ناموفق — برای تلاش مجدد ضربه بزنید</string>
 
     <!-- Re-key contact -->
     <string name="rekey_title">به‌روزرسانی کلید مخاطب</string>

@@ -188,8 +188,8 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                     loadMessages()
                     val ok = fileRepo?.uploadAttachment(msg) ?: false
                     if (!ok) {
-                        messageDaoRef?.updateStatus(msg.id, Message.STATUS_QUEUED)
-                        AppLogger.w(TAG, "Attachment upload failed — keeping queued")
+                        messageDaoRef?.updateStatus(msg.id, Message.STATUS_FAILED)
+                        AppLogger.w(TAG, "Attachment upload failed — marked as failed")
                     }
                     loadMessages()
                 } catch (e: Exception) {
@@ -213,6 +213,36 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                     loadMessages()
                 } catch (e: Exception) {
                     AppLogger.e(TAG, "downloadAttachment exception: ${e.message}", e)
+                }
+            }
+        }
+    }
+
+    /** Retry a failed message — reset to queued and re-trigger send. */
+    fun retryMessage(msg: Message) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                try {
+                    if (msg.isMedia) {
+                        // Media: reset upload progress and status, then re-upload
+                        messageDaoRef?.updateStatus(msg.id, Message.STATUS_QUEUED)
+                        messageDaoRef?.updateUploadProgress(msg.id, 0)
+                        loadMessages()
+                        val ok = fileRepo?.uploadAttachment(msg) ?: false
+                        if (!ok) {
+                            messageDaoRef?.updateStatus(msg.id, Message.STATUS_FAILED)
+                            AppLogger.w(TAG, "Retry attachment upload failed for ${msg.id.take(8)}...")
+                        }
+                        loadMessages()
+                    } else {
+                        // Text: reset to queued and sync
+                        messageDaoRef?.updateStatus(msg.id, Message.STATUS_QUEUED)
+                        loadMessages()
+                        repo?.syncOutgoing()
+                        loadMessages()
+                    }
+                } catch (e: Exception) {
+                    AppLogger.e(TAG, "retryMessage failed: ${e.message}", e)
                 }
             }
         }

@@ -177,6 +177,8 @@
     <string name="chat_file_tap_open">Tap to open</string>
     <string name="chat_file_cannot_open">No app available to open this file</string>
     <string name="chat_file_failed">Transfer failed</string>
+    <string name="chat_retrying">Retrying…</string>
+    <string name="chat_send_failed">Send failed — tap to retry</string>
 
     <!-- Re-key contact -->
     <string name="rekey_title">Update Contact Key</string>

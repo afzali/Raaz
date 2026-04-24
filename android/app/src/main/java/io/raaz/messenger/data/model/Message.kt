@@ -36,6 +36,7 @@ data class Message(
         const val STATUS_DELIVERED = 2
         const val STATUS_CONFIRMED = 3
         const val STATUS_EXPIRED = 4
+        const val STATUS_FAILED = 5
 
         // Media types
         const val MEDIA_TEXT = 0

@@ -78,9 +78,13 @@ class MessageRepository(
                     AppLogger.i(TAG, "Push OK → serverMsgId=${body.serverMessageId.take(8)}...")
                 } else {
                     AppLogger.w(TAG, "Push failed HTTP ${resp.code()} for msg ${msg.id.take(8)}...")
+                    messageDao.updateStatus(msg.id, Message.STATUS_FAILED)
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 AppLogger.e(TAG, "Push exception for ${msg.id.take(8)}...: ${e.message}", e)
+                messageDao.updateStatus(msg.id, Message.STATUS_FAILED)
             }
         }
         AppLogger.i(TAG, "syncOutgoing done: $sent/${queued.size} sent")

@@ -402,6 +402,11 @@ class ChatFragment : Fragment() {
             }
         }
 
+        override fun onRetry(message: Message) {
+            toast(getString(R.string.chat_retrying))
+            viewModel.retryMessage(message)
+        }
+
         override fun isAudioPlaying(messageId: String): Boolean = VoicePlayer.isPlaying(messageId)
 
         override fun audioPosition(messageId: String): Pair<Int, Int>? = audioPositions[messageId]

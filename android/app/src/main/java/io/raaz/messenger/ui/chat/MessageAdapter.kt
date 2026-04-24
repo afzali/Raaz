@@ -19,6 +19,7 @@ class MessageAdapter(
     open class Callbacks {
         open fun onAudioPlayToggle(message: Message) {}
         open fun onFileAction(message: Message) {}
+        open fun onRetry(message: Message) {}
         open fun isAudioPlaying(messageId: String): Boolean = false
         open fun audioPosition(messageId: String): Pair<Int, Int>? = null  // position, duration in ms
     }
@@ -84,7 +85,10 @@ class MessageAdapter(
             
             // Status logic:
             // 0=queued (clock), 1=sent (1 gray check), 2=delivered (2 blue), 3=confirmed (2 green), 4=expired (1 red)
+            val isFailed = item.message.status == Message.STATUS_FAILED
             val (iconRes, tintColor) = when (item.message.status) {
+                Message.STATUS_FAILED ->
+                    Pair(R.drawable.ic_feather_alert_circle, 0xFFE53935.toInt()) // red alert = failed
                 Message.STATUS_EXPIRED -> 
                     Pair(R.drawable.ic_check, 0xFFE53935.toInt()) // 1 red check = expired without delivery
                 Message.STATUS_QUEUED ->
@@ -102,6 +106,13 @@ class MessageAdapter(
             }
             b.ivStatus.setImageResource(iconRes)
             b.ivStatus.setColorFilter(tintColor, android.graphics.PorterDuff.Mode.SRC_IN)
+            // Retry: make the whole bubble clickable when failed
+            if (isFailed) {
+                b.root.setOnClickListener { callbacks.onRetry(item.message) }
+            } else {
+                b.root.setOnClickListener(null)
+                b.root.isClickable = false
+            }
             val r = b.root.context.resources
             b.bubble.background = androidx.core.content.ContextCompat.getDrawable(
                 b.root.context,

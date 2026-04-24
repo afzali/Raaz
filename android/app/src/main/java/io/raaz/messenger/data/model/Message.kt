@@ -10,10 +10,23 @@ data class Message(
     val createdAt: Long,
     val expiresAt: Long?,
     val serverMsgId: String?,
-    val nonce: String = ""
+    val nonce: String = "",
+    val mediaType: Int = MEDIA_TEXT,
+    val fileId: String? = null,
+    val fileName: String? = null,
+    val fileSize: Long? = null,
+    val mimeType: String? = null,
+    val localPath: String? = null,
+    val uploadProgress: Int = 0,
+    val downloadProgress: Int = 0,
+    val durationMs: Long? = null
 ) {
     val isOutgoing: Boolean get() = direction == 0
     val displayText: String get() = plaintextCache ?: ""
+    val isMedia: Boolean get() = mediaType != MEDIA_TEXT
+    val isAudio: Boolean get() = mediaType == MEDIA_AUDIO
+    val isFile: Boolean get() = mediaType == MEDIA_FILE
+    val isImage: Boolean get() = mediaType == MEDIA_IMAGE
 
     companion object {
         const val DIR_OUTGOING = 0
@@ -23,5 +36,11 @@ data class Message(
         const val STATUS_DELIVERED = 2
         const val STATUS_CONFIRMED = 3
         const val STATUS_EXPIRED = 4
+
+        // Media types
+        const val MEDIA_TEXT = 0
+        const val MEDIA_IMAGE = 1
+        const val MEDIA_AUDIO = 2
+        const val MEDIA_FILE = 3
     }
 }

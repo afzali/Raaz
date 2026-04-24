@@ -163,6 +163,20 @@
     <string name="date_today">امروز</string>
     <string name="date_yesterday">دیروز</string>
 
+    <!-- Voice / file / media -->
+    <string name="chat_attach">پیوست فایل</string>
+    <string name="chat_voice">ضبط صدا</string>
+    <string name="chat_voice_slide_cancel">برای ارسال رها کنید • برای لغو، انگشت را به بیرون بکشید</string>
+    <string name="chat_voice_permission_required">برای ضبط صدا نیاز به دسترسی میکروفون است</string>
+    <string name="chat_voice_too_short">برای ضبط نگه دارید</string>
+    <string name="chat_attach_permission_required">برای پیوست فایل نیاز به دسترسی حافظه است</string>
+    <string name="chat_file_downloading">در حال دانلود…</string>
+    <string name="chat_file_uploading">در حال ارسال…</string>
+    <string name="chat_file_tap_download">برای دانلود ضربه بزنید</string>
+    <string name="chat_file_tap_open">برای باز کردن ضربه بزنید</string>
+    <string name="chat_file_cannot_open">برنامه‌ای برای باز کردن این فایل نیست</string>
+    <string name="chat_file_failed">انتقال ناموفق بود</string>
+
     <!-- Re-key contact -->
     <string name="rekey_title">به‌روزرسانی کلید مخاطب</string>
     <string name="rekey_message">کد دعوت جدید مخاطب را وارد کنید تا کلید رمزنگاری او آپدیت شود. تاریخچه چت شما حفظ می‌شود.</string>

@@ -37,6 +37,32 @@ interface RaazApi {
 
     @GET("api/v1/health")
     suspend fun health(): Response<HealthResponse>
+
+    // ── File transfer ──
+    @POST("api/v1/files/upload")
+    suspend fun uploadFileChunk(
+        @Header("Authorization") auth: String,
+        @Body request: UploadFileChunkRequest
+    ): Response<UploadFileChunkResponse>
+
+    @GET("api/v1/files")
+    suspend fun listPendingFiles(
+        @Header("Authorization") auth: String
+    ): Response<PendingFilesResponse>
+
+    @GET("api/v1/files/{id}/chunk/{index}")
+    @Streaming
+    suspend fun downloadFileChunk(
+        @Header("Authorization") auth: String,
+        @Path("id") fileId: String,
+        @Path("index") chunkIndex: Int
+    ): Response<okhttp3.ResponseBody>
+
+    @DELETE("api/v1/files/{id}")
+    suspend fun ackFile(
+        @Header("Authorization") auth: String,
+        @Path("id") fileId: String
+    ): Response<Unit>
 }
 
 object RaazApiService {

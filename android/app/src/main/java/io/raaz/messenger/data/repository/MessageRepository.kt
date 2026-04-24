@@ -159,22 +159,54 @@ class MessageRepository(
         }
 
         AppLogger.i(TAG, "Storing msg in session ${session.id.take(8)}... (contact: ${session.contactDeviceId.take(8)}...)")
-        val msg = Message(
-            id = serverMsg.serverMessageId,
-            sessionId = session.id,
-            direction = Message.DIR_INCOMING,
-            ciphertext = serverMsg.ciphertext,
-            plaintextCache = plaintext,
-            status = Message.STATUS_DELIVERED,  // Will be marked CONFIRMED when user opens chat
-            createdAt = serverMsg.createdAt * 1000,
-            expiresAt = serverMsg.expiresAt * 1000,
-            serverMsgId = serverMsg.serverMessageId
-        )
+
+        // Detect file envelope — if plaintext is a JSON with "t" + "k" + "id", treat as media
+        val envelope = tryParseFileEnvelope(plaintext)
+        val msg = if (envelope != null) {
+            AppLogger.i(TAG, "Incoming message is a file envelope (type=${envelope.type}, size=${envelope.size}B)")
+            Message(
+                id = serverMsg.serverMessageId,
+                sessionId = session.id,
+                direction = Message.DIR_INCOMING,
+                ciphertext = serverMsg.ciphertext,
+                plaintextCache = plaintext,   // keep envelope JSON; UI uses other fields
+                status = Message.STATUS_DELIVERED,
+                createdAt = serverMsg.createdAt * 1000,
+                expiresAt = serverMsg.expiresAt * 1000,
+                serverMsgId = serverMsg.serverMessageId,
+                mediaType = FileTransferRepository.mediaTypeFromEnvelopeType(envelope.type),
+                fileId = envelope.fileId,
+                fileName = envelope.name,
+                fileSize = envelope.size,
+                mimeType = envelope.mime,
+                durationMs = envelope.durationMs
+            )
+        } else {
+            Message(
+                id = serverMsg.serverMessageId,
+                sessionId = session.id,
+                direction = Message.DIR_INCOMING,
+                ciphertext = serverMsg.ciphertext,
+                plaintextCache = plaintext,
+                status = Message.STATUS_DELIVERED,
+                createdAt = serverMsg.createdAt * 1000,
+                expiresAt = serverMsg.expiresAt * 1000,
+                serverMsgId = serverMsg.serverMessageId
+            )
+        }
         messageDao.insert(msg)
         sessionDao.updateLastMessage(session.id, msg.createdAt)
 
         ackMessage(token, serverMsg.serverMessageId)
         return ProcessResult.STORED
+    }
+
+    private fun tryParseFileEnvelope(plaintext: String): FileTransferRepository.FileEnvelope? {
+        if (!plaintext.startsWith("{")) return null
+        return try {
+            val env = com.google.gson.Gson().fromJson(plaintext, FileTransferRepository.FileEnvelope::class.java)
+            if (env != null && !env.fileId.isNullOrBlank() && !env.contentKeyB64.isNullOrBlank() && env.chunkCount > 0) env else null
+        } catch (_: Exception) { null }
     }
 
     private fun storePendingMessage(serverMsg: ServerMessage, plaintext: String) {

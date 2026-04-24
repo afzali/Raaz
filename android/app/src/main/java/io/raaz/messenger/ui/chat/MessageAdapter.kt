@@ -12,7 +12,16 @@ import io.raaz.messenger.databinding.ItemMessageIncomingBinding
 import io.raaz.messenger.databinding.ItemMessageOutgoingBinding
 import io.raaz.messenger.util.DateFormatter
 
-class MessageAdapter : ListAdapter<MessageAdapter.Item, RecyclerView.ViewHolder>(DIFF) {
+class MessageAdapter(
+    private val callbacks: Callbacks = Callbacks()
+) : ListAdapter<MessageAdapter.Item, RecyclerView.ViewHolder>(DIFF) {
+
+    open class Callbacks {
+        open fun onAudioPlayToggle(message: Message) {}
+        open fun onFileAction(message: Message) {}
+        open fun isAudioPlaying(messageId: String): Boolean = false
+        open fun audioPosition(messageId: String): Pair<Int, Int>? = null  // position, duration in ms
+    }
 
     sealed class Item {
         data class DateHeader(val label: String) : Item()
@@ -64,6 +73,11 @@ class MessageAdapter : ListAdapter<MessageAdapter.Item, RecyclerView.ViewHolder>
 
     inner class OutgoingVH(private val b: ItemMessageOutgoingBinding) : RecyclerView.ViewHolder(b.root) {
         fun bind(item: Item.Msg) {
+            val mediaView = b.root.findViewById<android.view.View>(R.id.media_container)
+            if (mediaView != null) {
+                MediaBinder.bind(mediaView, item.message, callbacks)
+            }
+            b.tvMessage.visibility = if (item.message.isMedia) android.view.View.GONE else android.view.View.VISIBLE
             b.tvMessage.text = item.message.displayText
             b.tvTime.text = DateFormatter.formatMessageTime(b.root.context, item.message.createdAt)
             val isToday = DateFormatter.isSameDay(item.message.createdAt, System.currentTimeMillis())
@@ -101,6 +115,11 @@ class MessageAdapter : ListAdapter<MessageAdapter.Item, RecyclerView.ViewHolder>
 
     inner class IncomingVH(private val b: ItemMessageIncomingBinding) : RecyclerView.ViewHolder(b.root) {
         fun bind(item: Item.Msg) {
+            val mediaView = b.root.findViewById<android.view.View>(R.id.media_container)
+            if (mediaView != null) {
+                MediaBinder.bind(mediaView, item.message, callbacks)
+            }
+            b.tvMessage.visibility = if (item.message.isMedia) android.view.View.GONE else android.view.View.VISIBLE
             b.tvMessage.text = item.message.displayText
             b.tvTime.text = DateFormatter.formatMessageTime(b.root.context, item.message.createdAt)
             b.bubble.background = androidx.core.content.ContextCompat.getDrawable(

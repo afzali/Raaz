@@ -20,6 +20,8 @@
         android:paddingTop="@dimen/bubble_padding_v"
         android:paddingBottom="@dimen/bubble_padding_v">
 
+        <include layout="@layout/view_media_content" />
+
         <TextView
             android:id="@+id/tv_message"
             android:layout_width="wrap_content"

@@ -164,6 +164,20 @@
     <string name="date_today">Today</string>
     <string name="date_yesterday">Yesterday</string>
 
+    <!-- Voice / file / media -->
+    <string name="chat_attach">Attach file</string>
+    <string name="chat_voice">Record voice</string>
+    <string name="chat_voice_slide_cancel">Release to send • Tap away to cancel</string>
+    <string name="chat_voice_permission_required">Microphone permission is required to record voice messages</string>
+    <string name="chat_voice_too_short">Hold to record</string>
+    <string name="chat_attach_permission_required">Storage permission required to attach files</string>
+    <string name="chat_file_downloading">Downloading…</string>
+    <string name="chat_file_uploading">Uploading…</string>
+    <string name="chat_file_tap_download">Tap to download</string>
+    <string name="chat_file_tap_open">Tap to open</string>
+    <string name="chat_file_cannot_open">No app available to open this file</string>
+    <string name="chat_file_failed">Transfer failed</string>
+
     <!-- Re-key contact -->
     <string name="rekey_title">Update Contact Key</string>
     <string name="rekey_message">Paste the new invite code from your contact to update their encryption key. Your chat history will be preserved.</string>

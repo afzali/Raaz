@@ -56,3 +56,40 @@ data class DeliveryReceipt(
     @SerializedName("message_id") val messageId: String,
     @SerializedName("acked_at") val ackedAt: Long
 )
+
+// ─── File transfer ──────────────────────────────────────────────────────────
+
+data class UploadFileChunkRequest(
+    @SerializedName("recipient_device_id") val recipientDeviceId: String,
+    @SerializedName("file_id") val fileId: String,
+    @SerializedName("file_name_enc") val fileNameEnc: String,
+    @SerializedName("mime_type_enc") val mimeTypeEnc: String,
+    @SerializedName("size_bytes") val sizeBytes: Long,
+    @SerializedName("chunk_index") val chunkIndex: Int,
+    @SerializedName("chunk_count") val chunkCount: Int,
+    @SerializedName("chunk_data") val chunkDataB64: String
+)
+
+data class UploadFileChunkResponse(
+    @SerializedName("file_id") val fileId: String,
+    @SerializedName("chunk_index") val chunkIndex: Int,
+    @SerializedName("chunks_received") val chunksReceived: Int,
+    @SerializedName("chunk_count") val chunkCount: Int,
+    @SerializedName("progress_pct") val progressPct: Double,
+    @SerializedName("upload_complete") val uploadComplete: Boolean
+)
+
+data class PendingFilesResponse(
+    @SerializedName("files") val files: List<PendingFile>
+)
+
+data class PendingFile(
+    @SerializedName("file_id") val fileId: String,
+    @SerializedName("sender_device_id") val senderDeviceId: String,
+    @SerializedName("file_name_enc") val fileNameEnc: String,
+    @SerializedName("mime_type_enc") val mimeTypeEnc: String,
+    @SerializedName("size_bytes") val sizeBytes: Long,
+    @SerializedName("chunk_count") val chunkCount: Int,
+    @SerializedName("created_at") val createdAt: Long,
+    @SerializedName("expires_at") val expiresAt: Long
+)

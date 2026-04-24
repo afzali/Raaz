@@ -1,12 +1,25 @@
 package io.raaz.messenger.ui.chat
 
+import android.Manifest
 import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.webkit.MimeTypeMap
 import android.widget.EditText
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -15,15 +28,20 @@ import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.lifecycle.lifecycleScope
 import io.raaz.messenger.R
+import io.raaz.messenger.data.model.Message
 import io.raaz.messenger.databinding.FragmentChatBinding
 import io.raaz.messenger.ui.SharedViewModel
 import io.raaz.messenger.notification.RaazNotificationManager
+import io.raaz.messenger.util.AppLogger
 import io.raaz.messenger.util.ForegroundSyncManager
 import io.raaz.messenger.util.LocaleManager
+import io.raaz.messenger.util.VoicePlayer
+import io.raaz.messenger.util.VoiceRecorder
 import io.raaz.messenger.util.hideKeyboard
 import io.raaz.messenger.util.toast
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
+import java.io.File
 
 class ChatFragment : Fragment() {
 
@@ -34,6 +52,30 @@ class ChatFragment : Fragment() {
     private val args: ChatFragmentArgs by navArgs()
 
     private lateinit var adapter: MessageAdapter
+    private var recorder: VoiceRecorder? = null
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private val audioPositions = mutableMapOf<String, Pair<Int, Int>>()
+    private var recStartMs: Long = 0
+    private val recTimerRunnable = object : Runnable {
+        override fun run() {
+            val elapsed = System.currentTimeMillis() - recStartMs
+            val s = elapsed / 1000
+            _binding?.tvRecTimer?.text = "%d:%02d".format(s / 60, s % 60)
+            mainHandler.postDelayed(this, 250)
+        }
+    }
+
+    // ── File picker launcher ──
+    private val pickFileLauncher = registerForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri -> uri?.let { onFilePicked(it) } }
+
+    // ── Microphone permission ──
+    private val micPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (!granted) toast(getString(R.string.chat_voice_permission_required))
+    }
 
     override fun onAttach(context: Context) {
         super.onAttach(LocaleManager.applyLocale(context))
@@ -64,12 +106,11 @@ class ChatFragment : Fragment() {
         // Fix RTL back arrow rotation for Persian
         if (LocaleManager.getLanguage(requireContext()) == LocaleManager.LANG_FA) {
             binding.toolbar.navigationIcon?.let { icon ->
-                // Mirror the back arrow for RTL
                 icon.setAutoMirrored(true)
             }
         }
 
-        adapter = MessageAdapter()
+        adapter = MessageAdapter(buildAdapterCallbacks())
         val layoutManager = LinearLayoutManager(requireContext()).apply {
             stackFromEnd = true
         }
@@ -82,6 +123,29 @@ class ChatFragment : Fragment() {
                 viewModel.sendMessage(text)
                 binding.etMessage.text?.clear()
                 binding.etMessage.hideKeyboard()
+            }
+        }
+
+        // Toggle mic ↔ send icon based on text presence
+        binding.etMessage.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun afterTextChanged(s: Editable?) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                val empty = s.isNullOrBlank()
+                binding.btnMic.visibility = if (empty) View.VISIBLE else View.GONE
+                binding.btnSend.visibility = if (empty) View.GONE else View.VISIBLE
+            }
+        })
+
+        binding.btnAttach.setOnClickListener { pickFileLauncher.launch("*/*") }
+
+        // Hold-to-record behavior
+        binding.btnMic.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> { startVoiceRecording(); true }
+                MotionEvent.ACTION_UP -> { finishVoiceRecording(cancel = false); true }
+                MotionEvent.ACTION_CANCEL -> { finishVoiceRecording(cancel = true); true }
+                else -> false
             }
         }
 
@@ -215,8 +279,158 @@ class ChatFragment : Fragment() {
             .show()
     }
 
+    // ─── Voice recording ────────────────────────────────────────────────
+
+    private fun startVoiceRecording() {
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO)
+            != PackageManager.PERMISSION_GRANTED) {
+            micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+            return
+        }
+        if (recorder?.isRecording == true) return
+        val r = VoiceRecorder(requireContext())
+        val file = r.start()
+        if (file == null) {
+            toast(getString(R.string.chat_voice_permission_required))
+            return
+        }
+        recorder = r
+        recStartMs = System.currentTimeMillis()
+        binding.rowRecording.visibility = View.VISIBLE
+        binding.rowCompose.visibility = View.INVISIBLE
+        mainHandler.post(recTimerRunnable)
+    }
+
+    private fun finishVoiceRecording(cancel: Boolean) {
+        val r = recorder ?: return
+        mainHandler.removeCallbacks(recTimerRunnable)
+        binding.rowRecording.visibility = View.GONE
+        binding.rowCompose.visibility = View.VISIBLE
+        val result = r.stop(discard = cancel)
+        recorder = null
+        if (cancel || result == null) return
+
+        val (file, durationMs) = result
+        viewModel.sendAttachment(
+            localFile = file,
+            mediaType = Message.MEDIA_AUDIO,
+            fileName = file.name,
+            mimeType = "audio/m4a",
+            durationMs = durationMs
+        )
+    }
+
+    // ─── File picker ────────────────────────────────────────────────────
+
+    private fun onFilePicked(uri: Uri) {
+        lifecycleScope.launch {
+            val copied = copyUriToCache(uri)
+            if (copied == null) {
+                toast(getString(R.string.chat_file_failed))
+                return@launch
+            }
+            val name = queryDisplayName(uri) ?: copied.name
+            val mime = requireContext().contentResolver.getType(uri)
+                ?: MimeTypeMap.getSingleton().getMimeTypeFromExtension(name.substringAfterLast('.', ""))
+                ?: "application/octet-stream"
+            val mediaType = if (mime.startsWith("image/")) Message.MEDIA_IMAGE else Message.MEDIA_FILE
+            viewModel.sendAttachment(copied, mediaType, name, mime, null)
+        }
+    }
+
+    private suspend fun copyUriToCache(uri: Uri): File? = kotlinx.coroutines.withContext(
+        kotlinx.coroutines.Dispatchers.IO
+    ) {
+        try {
+            val outDir = File(requireContext().cacheDir, "attach_outgoing").apply { mkdirs() }
+            val out = File(outDir, "att_${System.currentTimeMillis()}")
+            requireContext().contentResolver.openInputStream(uri)?.use { input ->
+                out.outputStream().use { output -> input.copyTo(output) }
+            } ?: return@withContext null
+            out
+        } catch (e: Exception) {
+            AppLogger.e("ChatFragment", "copyUriToCache failed: ${e.message}", e)
+            null
+        }
+    }
+
+    private fun queryDisplayName(uri: Uri): String? {
+        return try {
+            requireContext().contentResolver.query(uri, null, null, null, null)?.use { c ->
+                val idx = c.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                if (idx >= 0 && c.moveToFirst()) c.getString(idx) else null
+            }
+        } catch (_: Exception) { null }
+    }
+
+    // ─── Adapter callbacks (audio playback + file download/open) ────────
+
+    private fun buildAdapterCallbacks(): MessageAdapter.Callbacks = object : MessageAdapter.Callbacks() {
+        override fun onAudioPlayToggle(message: Message) {
+            val path = message.localPath
+            if (path.isNullOrBlank()) {
+                // not downloaded yet — trigger download
+                viewModel.downloadAttachment(message)
+                return
+            }
+            if (VoicePlayer.isPlaying(message.id)) {
+                VoicePlayer.stop()
+                adapter.notifyDataSetChanged()
+            } else {
+                val ok = VoicePlayer.play(
+                    id = message.id,
+                    path = path,
+                    onProgress = { id, pos, dur ->
+                        audioPositions[id] = pos to dur
+                        _binding?.rvMessages?.post { adapter.notifyDataSetChanged() }
+                    },
+                    onComplete = { id ->
+                        audioPositions.remove(id)
+                        _binding?.rvMessages?.post { adapter.notifyDataSetChanged() }
+                    }
+                )
+                if (ok) adapter.notifyDataSetChanged()
+            }
+        }
+
+        override fun onFileAction(message: Message) {
+            val path = message.localPath
+            if (path.isNullOrBlank()) {
+                viewModel.downloadAttachment(message)
+            } else {
+                openFile(File(path), message.mimeType ?: "application/octet-stream")
+            }
+        }
+
+        override fun isAudioPlaying(messageId: String): Boolean = VoicePlayer.isPlaying(messageId)
+
+        override fun audioPosition(messageId: String): Pair<Int, Int>? = audioPositions[messageId]
+    }
+
+    private fun openFile(file: File, mime: String) {
+        try {
+            val uri = FileProvider.getUriForFile(
+                requireContext(),
+                "${requireContext().packageName}.fileprovider",
+                file
+            )
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, mime)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(Intent.createChooser(intent, null))
+        } catch (e: Exception) {
+            AppLogger.e("ChatFragment", "openFile failed: ${e.message}", e)
+            toast(getString(R.string.chat_file_cannot_open))
+        }
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
+        mainHandler.removeCallbacks(recTimerRunnable)
+        recorder?.cancel()
+        recorder = null
+        VoicePlayer.stop()
         _binding = null
     }
 }

@@ -40,6 +40,8 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     val rekeyResult: LiveData<RekeyResult?> = _rekeyResult
 
     private var repo: MessageRepository? = null
+    private var fileRepo: io.raaz.messenger.data.repository.FileTransferRepository? = null
+    private var messageDaoRef: MessageDao? = null
     private var contactPublicKey: String = ""
     private var sessionId: String = ""
     private var contactId: String = ""
@@ -53,12 +55,17 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                     db = RaazDatabase.getInstance(getApplication(), dbKey)
                     val sessionDao = SessionDao(db!!.db)
                     val pendingDao = PendingMessageDao(db!!.db)
+                    val messageDao = MessageDao(db!!.db)
+                    messageDaoRef = messageDao
                     val prefs = RaazPreferences(getApplication())
                     val settings = io.raaz.messenger.data.db.dao.SettingsDao(db!!.db).get()
 
                     repo = MessageRepository(
-                        MessageDao(db!!.db), sessionDao, pendingDao, prefs,
+                        messageDao, sessionDao, pendingDao, prefs,
                         settings.serverUrl, getApplication()
+                    )
+                    fileRepo = io.raaz.messenger.data.repository.FileTransferRepository(
+                        messageDao, sessionDao, prefs, settings.serverUrl, getApplication()
                     )
 
                     val s = sessionDao.getById(sessionId)
@@ -136,6 +143,76 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                     loadMessages()
                 } catch (e: Exception) {
                     AppLogger.e(TAG, "Failed to send message: ${e.message}", e)
+                }
+            }
+        }
+    }
+
+    /**
+     * Send a media attachment (voice note / file / image).
+     * [localFile]: file already present in app storage (copy from URI done by caller).
+     * [mediaType]: one of Message.MEDIA_AUDIO / MEDIA_FILE / MEDIA_IMAGE
+     */
+    fun sendAttachment(
+        localFile: java.io.File,
+        mediaType: Int,
+        fileName: String,
+        mimeType: String,
+        durationMs: Long? = null
+    ) {
+        if (contactPublicKey.isBlank()) return
+        AppLogger.i(TAG, "Sending attachment type=$mediaType name=$fileName size=${localFile.length()}B")
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                try {
+                    val now = System.currentTimeMillis()
+                    val msg = Message(
+                        id = CryptoManager.generateMessageId(),
+                        sessionId = sessionId,
+                        direction = Message.DIR_OUTGOING,
+                        ciphertext = "",  // filled after upload (envelope)
+                        plaintextCache = null,
+                        status = Message.STATUS_QUEUED,
+                        createdAt = now,
+                        expiresAt = now + 86_400_000L,
+                        serverMsgId = null,
+                        mediaType = mediaType,
+                        fileName = fileName,
+                        fileSize = localFile.length(),
+                        mimeType = mimeType,
+                        localPath = localFile.absolutePath,
+                        uploadProgress = 0,
+                        durationMs = durationMs
+                    )
+                    repo?.insertOutgoing(msg)
+                    loadMessages()
+                    val ok = fileRepo?.uploadAttachment(msg) ?: false
+                    if (!ok) {
+                        messageDaoRef?.updateStatus(msg.id, Message.STATUS_QUEUED)
+                        AppLogger.w(TAG, "Attachment upload failed — keeping queued")
+                    }
+                    loadMessages()
+                } catch (e: Exception) {
+                    AppLogger.e(TAG, "Failed to send attachment: ${e.message}", e)
+                }
+            }
+        }
+    }
+
+    /** Download a received media attachment's chunks and decrypt to local storage. */
+    fun downloadAttachment(msg: Message) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                try {
+                    val path = fileRepo?.downloadAttachment(msg)
+                    if (path != null) {
+                        AppLogger.i(TAG, "Download complete: $path")
+                    } else {
+                        AppLogger.w(TAG, "Download failed for msg ${msg.id.take(8)}...")
+                    }
+                    loadMessages()
+                } catch (e: Exception) {
+                    AppLogger.e(TAG, "downloadAttachment exception: ${e.message}", e)
                 }
             }
         }

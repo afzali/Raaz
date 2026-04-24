@@ -59,7 +59,16 @@ class RaazDatabase private constructor(context: Context, key: ByteArray) :
                 created_at INTEGER NOT NULL,
                 expires_at INTEGER,
                 server_msg_id TEXT,
-                nonce TEXT NOT NULL DEFAULT ''
+                nonce TEXT NOT NULL DEFAULT '',
+                media_type INTEGER NOT NULL DEFAULT 0,
+                file_id TEXT,
+                file_name TEXT,
+                file_size INTEGER,
+                mime_type TEXT,
+                local_path TEXT,
+                upload_progress INTEGER NOT NULL DEFAULT 0,
+                download_progress INTEGER NOT NULL DEFAULT 0,
+                duration_ms INTEGER
             )
         """.trimIndent())
 
@@ -131,12 +140,25 @@ class RaazDatabase private constructor(context: Context, key: ByteArray) :
             db.execSQL("ALTER TABLE app_settings ADD COLUMN biometric_enabled INTEGER NOT NULL DEFAULT 0")
             AppLogger.i(TAG, "Added sync_interval, sync_enabled, biometric_enabled columns (v3)")
         }
+        if (oldVersion < 4) {
+            // Add media/file columns to messages
+            db.execSQL("ALTER TABLE messages ADD COLUMN media_type INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE messages ADD COLUMN file_id TEXT")
+            db.execSQL("ALTER TABLE messages ADD COLUMN file_name TEXT")
+            db.execSQL("ALTER TABLE messages ADD COLUMN file_size INTEGER")
+            db.execSQL("ALTER TABLE messages ADD COLUMN mime_type TEXT")
+            db.execSQL("ALTER TABLE messages ADD COLUMN local_path TEXT")
+            db.execSQL("ALTER TABLE messages ADD COLUMN upload_progress INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE messages ADD COLUMN download_progress INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE messages ADD COLUMN duration_ms INTEGER")
+            AppLogger.i(TAG, "Added media/file columns to messages (v4)")
+        }
     }
 
     companion object {
         private const val TAG = "RaazDB"
         const val DB_NAME = "raaz_main.db"
-        private const val DB_VERSION = 3
+        private const val DB_VERSION = 4
 
         @Volatile private var instance: RaazDatabase? = null
 

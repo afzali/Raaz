@@ -16,6 +16,10 @@
 -keep class io.raaz.messenger.data.network.** { *; }
 -keep class io.raaz.messenger.crypto.QrCodeHelper$ContactPayload { *; }
 
+# FileEnvelope (Gson serialized in messages - must match between debug/release)
+-keep class io.raaz.messenger.data.repository.FileTransferRepository$FileEnvelope { *; }
+-keepclassmembers class io.raaz.messenger.data.repository.FileTransferRepository$FileEnvelope { *; }
+
 # ZXing
 -keep class com.google.zxing.** { *; }
 -keep class com.journeyapps.** { *; }

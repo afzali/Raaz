@@ -165,7 +165,7 @@ class MessageRepository(
         AppLogger.i(TAG, "Storing msg in session ${session.id.take(8)}... (contact: ${session.contactDeviceId.take(8)}...)")
 
         // Detect file envelope — if plaintext is a JSON with "t" + "k" + "id", treat as media
-        val envelope = tryParseFileEnvelope(plaintext)
+        val envelope = tryParseFileEnvelope(plaintext, serverMsg.serverMessageId)
         val msg = if (envelope != null) {
             AppLogger.i(TAG, "Incoming message is a file envelope (type=${envelope.type}, size=${envelope.size}B)")
             Message(
@@ -205,11 +205,89 @@ class MessageRepository(
         return ProcessResult.STORED
     }
 
-    private fun tryParseFileEnvelope(plaintext: String): FileTransferRepository.FileEnvelope? {
+    private fun tryParseFileEnvelope(plaintext: String, serverMsgId: String? = null): FileTransferRepository.FileEnvelope? {
         if (!plaintext.startsWith("{")) return null
         return try {
+            // Try new format first (t/k/id/n/m/s/c/d)
             val env = com.google.gson.Gson().fromJson(plaintext, FileTransferRepository.FileEnvelope::class.java)
-            if (env != null && !env.fileId.isNullOrBlank() && !env.contentKeyB64.isNullOrBlank() && env.chunkCount > 0) env else null
+            if (env != null && !env.fileId.isNullOrBlank() && !env.contentKeyB64.isNullOrBlank() && env.chunkCount > 0) {
+                return env
+            }
+            // Fallback: old minified format (a/b/c/d/e/f/g/h) or minimal (a/b)
+            tryParseOldEnvelope(plaintext, serverMsgId)
+        } catch (_: Exception) {
+            // Try old format as fallback
+            tryParseOldEnvelope(plaintext, serverMsgId)
+        }
+    }
+
+    /**
+     * Parse legacy envelopes with various obfuscated formats.
+     * Format A (a/b/c/d/e/f/g/h): a=type, b=key, c=fileId, d=name, e=mime, f=size, g=chunkCount, h=duration
+     * Format B (t/k only): incomplete envelope, fileId must be provided externally
+     */
+    private fun tryParseOldEnvelope(plaintext: String, fallbackFileId: String? = null): FileTransferRepository.FileEnvelope? {
+        return try {
+            val tree = com.google.gson.Gson().fromJson(plaintext, com.google.gson.JsonObject::class.java)
+
+            // Try to find type (t or a)
+            val type = tree.get("t")?.asString ?: tree.get("a")?.asString ?: return null
+            // Try to find key (k or b)
+            val key = tree.get("k")?.asString ?: tree.get("b")?.asString ?: return null
+
+            // Check if this is the minimal format (only a/b or t/k present)
+            val hasOnlyMinimalFields = tree.size() <= 2 &&
+                ((tree.has("a") || tree.has("t")) && (tree.has("b") || tree.has("k")))
+
+            if (hasOnlyMinimalFields) {
+                // Minimal format: need external fileId
+                val fileId = fallbackFileId ?: return null
+                // Assume single chunk for old minimal format or extract from message
+                return FileTransferRepository.FileEnvelope(
+                    type = type, contentKeyB64 = key, fileId = fileId,
+                    name = "", mime = "audio/mp4", size = 0L,
+                    chunkCount = 1, durationMs = null
+                )
+            }
+
+            // Full format: try to find fileId (id, fileId, c-as-string, i)
+            val fileId = tree.get("id")?.asString
+                ?: tree.get("fileId")?.asString
+                ?: tree.get("c")?.let { if (it.isJsonPrimitive && it.asJsonPrimitive.isString) it.asString else null }
+                ?: tree.get("i")?.asString
+                ?: fallbackFileId
+                ?: return null
+
+            // Try to find chunkCount (g, c-as-int, chunkCount)
+            val chunkCount = tree.get("g")?.asInt
+                ?: tree.get("c")?.let { if (it.isJsonPrimitive && it.asJsonPrimitive.isNumber) it.asInt else null }
+                ?: tree.get("chunkCount")?.asInt
+                ?: 0
+            if (chunkCount <= 0) return null
+
+            // Optional fields with fallbacks
+            val name = tree.get("n")?.asString
+                ?: tree.get("name")?.asString
+                ?: tree.get("d")?.asString
+                ?: ""
+            val mime = tree.get("m")?.asString
+                ?: tree.get("mime")?.asString
+                ?: tree.get("e")?.asString
+                ?: "application/octet-stream"
+            val size = tree.get("s")?.asLong
+                ?: tree.get("size")?.asLong
+                ?: tree.get("f")?.asLong
+                ?: 0L
+            val durationMs = tree.get("d")?.asLong
+                ?: tree.get("durationMs")?.asLong
+                ?: tree.get("h")?.asLong
+                ?: tree.get("duration")?.asLong
+
+            FileTransferRepository.FileEnvelope(
+                type = type, contentKeyB64 = key, fileId = fileId,
+                name = name, mime = mime, size = size,
+                chunkCount = chunkCount, durationMs = durationMs
+            )
         } catch (_: Exception) { null }
     }
 
@@ -255,7 +333,7 @@ class MessageRepository(
         for (p in pending) {
             try {
                 // Detect file envelope — same logic as processIncoming
-                val envelope = tryParseFileEnvelope(p.plaintextCache ?: "")
+                val envelope = tryParseFileEnvelope(p.plaintextCache ?: "", p.serverMsgId)
                 val msg = if (envelope != null) {
                     AppLogger.i(TAG, "Pending message is a file envelope (type=${envelope.type}, size=${envelope.size}B)")
                     Message(
